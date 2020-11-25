@@ -8,30 +8,30 @@ const { database, firestore } = require('firebase-admin');
 const { ref } = require('firebase-functions/lib/providers/database');
 
 
-var db = admin.database();
+const db = admin.database();
 exports.getUnreadChat = functions.https.onCall((data,context) =>{
-  var uid = context.auth.uid;
-  var listChatID = [];
-  var listdata = [];
-  var result = [];
-  var sum = 0;
+  const uid = context.auth.uid;
+  let listChatID = [];
+  let listData = [];
+  let result = [];
+  let sum = 0;
   return admin.database().ref('/').once('value').then(snap =>{
     if(snap.child("Users").child(uid).hasChild("connection"))
     if(snap.child("Users").child(uid).child("connection").hasChild("matches")){
-       snap.child("Users").child(uid).child("connection").child("matches").forEach(function(userSnapshot) {
-         var chatID = snap.child("Users").child(uid).child("connection").child("matches").child(userSnapshot.key).child("ChatId").val();
-          listChatID.push(chatID);
+       snap.child("Users").child(uid).child("connection").child("matches").forEach((userSnapshot) => {
+         const chatID = snap.child("Users").child(uid).child("connection").child("matches").child(userSnapshot.key).child("ChatId").val();
+         listChatID.push(chatID);
       });
-      for(var i =0;i<listChatID.length;i++){
-       snap.child("Chat").child(listChatID[i]).forEach(function(chatSnapshot) {
-          var data = snap.child("Chat").child(listChatID[i]).child(chatSnapshot.key).val();
-          listdata.push(data);
+      for(let i =0; i<listChatID.length; i++){
+       snap.child("Chat").child(listChatID[i]).forEach((chatSnapshot) => {
+         const data = snap.child("Chat").child(listChatID[i]).child(chatSnapshot.key).val();
+         listData.push(data);
         });
       }
-      result = listdata.filter(function(element) {
+      result = listData.filter((element) => {
         return element.read === 'Unread';
       });    
-      for(var j = 0;j<result.length;j++){
+      for(let j = 0; j<result.length; j++){
        if(result[j]['createByUser'].toString() !== uid.toString()){
           sum = sum +1;
        }
@@ -56,11 +56,11 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
   var maxOtherID = 0;
     return admin.database().ref('/Users/').once('value').then(snap =>{
     if(snap.child(uid).hasChild("Questions")){
-    snap.child(uid).child('Questions').forEach(function(snapid){
+    snap.child(uid).child('Questions').forEach((snapid) => {
       var dd = snap.child(uid).child('Questions').child(snapid.key).val();
       listQAuid.push(dd);
     });
-    snap.forEach(function(userSnapshot) {
+    snap.forEach((userSnapshot) => {
       if(userSnapshot.hasChild("Questions") && userSnapshot.key !== uid){
         //console.log("value",userSnapshot.key);
         for(var i = 0;i<listQAuid.length;i++){
@@ -125,15 +125,15 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
         }else{
           var uid = context.auth.uid;
          console.log("question","else");
-        snap.child('Users').child(uid).child('Questions').forEach(function(answerQuestion){
+        snap.child('Users').child(uid).child('Questions').forEach((answerQuestion) => {
           listQuestionAlready.push(answerQuestion.key);
          });
          console.log("questionlistQuestionAlready",listQuestionAlready.toString())
-        snap.child("Question").child(data.language).forEach(function(questionSnapshot) {
+        snap.child("Question").child(data.language).forEach((questionSnapshot) => {
           if(!listQuestionAlready.includes(questionSnapshot.key)){
-            var key = questionSnapshot.key;
-            var objset = snap.child('Question').child(data.language).child(key).val();
-            var object = {id : questionSnapshot.key ,result : objset};
+            const key = questionSnapshot.key;
+            const obj = snap.child('Question').child(data.language).child(key).val();
+            const object = {id: questionSnapshot.key, result: obj};
             listQuestion.push(object);
           }
         });
@@ -150,19 +150,19 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
   });
 
   exports.addUsersGuyza = functions.https.onRequest((request, response) => {
-      var imageProfile = [
-        "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F17EMUK2pOjYUih8hNy17Ed866S02%2FprofileImageUrl0?alt=media&token=67a05672-2f5a-4282-beed-8cc2e6bf4652",
-        "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F2VUqLvFpClTYwAkXOJJgFSUdPsC3%2FprofileImageUrl0?alt=media&token=12d2b00a-8221-4691-899b-0359b1bed2af",
-        "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F35y5YHvB6hWNyIXCHvfqPrBt8uA2%2FprofileImageUrl0?alt=media&token=90c9b63e-289f-4278-bf19-7c6cb1998366",
-        "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F35y5YHvB6hWNyIXCHvfqPrBt8uA2%2FprofileImageUrl0?alt=media&token=90c9b63e-289f-4278-bf19-7c6cb1998366",
-        "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FC7nwzXMwncZ7NVN9mkeuo0vq0xr2%2FprofileImageUrl0?alt=media&token=24f27193-ad6b-45cf-a50c-fd261e9406c4"
-      ];
-      var questionId = ["-MJwHY62WnK_d3mhh2yC","-MJwHY63sOXwRwtMYVH5","-MJwHY656cvFC9oNs0de","-MJwHY66d4wk-YPDyIgV","-MJwHY68p76QhGBDylb7",
-                        "-MJwHY69kHBcls75av7O","-MJwHY6BEGTeYEI4t6iV","-MJwHY6CXQYHot9NCONO","-MJwHY6EsYYYfG0rk-dW","-MJwHY6HtUXkjESVyS3q",
-                        "-MJwHY7Ulu3BGHwKohp1","-MJwHY7VCz0K7JQJNLXg","-MJwHY7XKMtDts6QZ9RZ","-MJwHY7ZIquCo4hV2dsp","-MJwHY7_Mi8YkpRvlI6-"];
-      var weight = [1,10,100,150,250];
-      var sex = ["Male","Female"];
-      for(var i =0;i<50;i++){
+    const imageProfile = [
+      "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F17EMUK2pOjYUih8hNy17Ed866S02%2FprofileImageUrl0?alt=media&token=67a05672-2f5a-4282-beed-8cc2e6bf4652",
+      "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F2VUqLvFpClTYwAkXOJJgFSUdPsC3%2FprofileImageUrl0?alt=media&token=12d2b00a-8221-4691-899b-0359b1bed2af",
+      "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F35y5YHvB6hWNyIXCHvfqPrBt8uA2%2FprofileImageUrl0?alt=media&token=90c9b63e-289f-4278-bf19-7c6cb1998366",
+      "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F35y5YHvB6hWNyIXCHvfqPrBt8uA2%2FprofileImageUrl0?alt=media&token=90c9b63e-289f-4278-bf19-7c6cb1998366",
+      "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FC7nwzXMwncZ7NVN9mkeuo0vq0xr2%2FprofileImageUrl0?alt=media&token=24f27193-ad6b-45cf-a50c-fd261e9406c4"
+    ];
+    const questionId = ["-MJwHY62WnK_d3mhh2yC", "-MJwHY63sOXwRwtMYVH5", "-MJwHY656cvFC9oNs0de", "-MJwHY66d4wk-YPDyIgV", "-MJwHY68p76QhGBDylb7",
+      "-MJwHY69kHBcls75av7O", "-MJwHY6BEGTeYEI4t6iV", "-MJwHY6CXQYHot9NCONO", "-MJwHY6EsYYYfG0rk-dW", "-MJwHY6HtUXkjESVyS3q",
+      "-MJwHY7Ulu3BGHwKohp1", "-MJwHY7VCz0K7JQJNLXg", "-MJwHY7XKMtDts6QZ9RZ", "-MJwHY7ZIquCo4hV2dsp", "-MJwHY7_Mi8YkpRvlI6-"];
+    const weight = [1, 10, 100, 150, 250];
+    const sex = ["Male", "Female"];
+    for(let i =0; i<50; i++){
           db.ref('Users/guyza'+i).set({
             "Age":18,
             "birth":909100800000,
@@ -195,12 +195,12 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
 
 
   exports.addQuestionProgramically = functions.https.onRequest((request, response) => {
-    var refQA = db.ref('Question/th');
-    var refQAEnglish = db.ref('Question/en');
-    var refStartth = db.ref('RegisterQuestion/th')
-    var refStartthEnglish = db.ref('RegisterQuestion/en')
-    var pushId = refQA.push();
-    var pushIdEN = pushId.key;
+    const refQA = db.ref('Question/th');
+    const refQAEnglish = db.ref('Question/en');
+    const refStartth = db.ref('RegisterQuestion/th');
+    const refStartthEnglish = db.ref('RegisterQuestion/en');
+    let pushId = refQA.push();
+    let pushIdEN = pushId.key;
     pushId.set({
       "question":"เชื่อเรื่องการรักเดียวใจเดียวหรือไม่",
       0: "เชื่อ",
@@ -1598,7 +1598,7 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
   var receiverId = context.params.chatId;
   var messageId = context.params.messageId;
   var ref = db.ref('/Chat/'+receiverId+'/'+messageId);
-  ref.once("value", function(snapshot) {
+  ref.once("value", (snapshot) => {
     var createBy = snapshot.child('createByUser').val();
     var text = snapshot.child('text').val();
     var time = snapshot.child('time').val();
@@ -1614,11 +1614,11 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
     console.log("CreateByUser: ", createBy);
     var ref2 = db.ref('/Users/'+createBy+'/connection/matches');
 
-    ref2.orderByChild('ChatId').equalTo(receiverId).on("child_added", function(snapshot, prevChildKey) {
+    ref2.orderByChild('ChatId').equalTo(receiverId).on("child_added", (snapshot, prevChildKey) => {
 
         //console.log("MatchId_Fetch : ",snapshot.key);
         var ref3 = db.ref('/Users/'+snapshot.key);
-        ref3.once("value", function(snapshot) {
+        ref3.once("value", (snapshot) => {
         var token = snapshot.child('token').val();
         console.log("token : ",token);
         return admin.database().ref('/Users/'+createBy).once('value').then(snap =>{
@@ -1655,17 +1655,17 @@ exports.getPercentageMatching = functions.https.onCall((data,context) =>{
   
 });
 exports.sendnotificationMatch = functions.database.ref('/Users/{userId}/connection/matches/{matchId}').onCreate((Change,context) => {
-  var matchID = context.params.matchId;
-  var userID = context.params.userId;
+  const matchID = context.params.matchId;
+  const userID = context.params.userId;
   console.log("MatchID_MatchNotification: ", matchID)
   console.log("UserID_MatchNotification:: ", userID)
-  var ref  = db.ref('/Users/'+userID)
-  ref.once("value", function(snapshot){
-    var token = snapshot.child('token').val();
+  const ref = db.ref('/Users/' + userID);
+  ref.once("value", (snapshot) => {
+    const token = snapshot.child('token').val();
     if(snapshot.child('status').val()!==1){
     return admin.database().ref('/Users/'+matchID).once('value').then(snap =>{
-      var name = snap.child('name').val();
-        const payload = {
+      const name = snap.child('name').val();
+      const payload = {
           data : {
             data_type: "direct_matching",
             title: "Match ID" + matchID,
@@ -1674,8 +1674,8 @@ exports.sendnotificationMatch = functions.database.ref('/Users/{userId}/connecti
         };
         console.log("Name_MatchNotification: ", name)
         console.log("Token: ", token)
-        return admin.messaging().sendToDevice(token,payload);  
-      }); 
+        return admin.messaging().sendToDevice(token,payload);
+      });
     }
   });
 });
