@@ -2,6 +2,7 @@ const { nthRoot, sqrt, e, add } = require('mathjs');
 const functions = require('firebase-functions');
 const { Change } = require('firebase-functions');
 const axios = require('axios')
+const moment = require('moment')
 const admin = require('firebase-admin');
 admin.initializeApp();
 
@@ -172,50 +173,63 @@ exports.addQuestions = functions.https.onCall((data, context) => {
   });
 });
 
-// NOTE addUsersGuyza
+// NOTE addRandomUsers
 
 
-exports.addUsersGuyza = functions.https.onRequest((request, response) => {
-  const imageProfile = [
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca"
-  ];
-  const questionId = ["-MJwHY62WnK_d3mhh2yC", "-MJwHY63sOXwRwtMYVH5", "-MJwHY656cvFC9oNs0de", "-MJwHY66d4wk-YPDyIgV", "-MJwHY68p76QhGBDylb7",
-    "-MJwHY69kHBcls75av7O", "-MJwHY6BEGTeYEI4t6iV", "-MJwHY6CXQYHot9NCONO", "-MJwHY6EsYYYfG0rk-dW", "-MJwHY6HtUXkjESVyS3q",
-    "-MJwHY7Ulu3BGHwKohp1", "-MJwHY7VCz0K7JQJNLXg", "-MJwHY7XKMtDts6QZ9RZ", "-MJwHY7ZIquCo4hV2dsp", "-MJwHY7_Mi8YkpRvlI6-"];
-  const weight = [1, 10, 100, 150, 250];
-  const sex = ["Male", "Female"];
-  for (let i = 0; i < 50; i++) {
-    db.ref('Users/guyza' + i).set({
-      "Age": 18,
-      "birth": 909100800000,
-      "date": new Date().getTime(),
-      "name": 'Guyza' + i,
-      "sex": sex[Math.floor(Math.random() * 2)],
-      "Distance": "Untitled",
-      "MaxAdmob": 10,
-      "MaxChat": 20,
-      "MaxLike": 20,
-      "MaxStar": 5,
-      "OppositeUserAgeMax": 70,
-      "OppositeUserAgeMin": 18,
-      "OppositeUserSex": "All",
-      "Vip": 0,
-      "status": 0
-    });
-    db.ref('Users/guyza' + i + '/ProfileImage/profileImageUrl0').set(imageProfile[Math.floor(Math.random() * 5)]);
-    db.ref('Users/guyza' + i + '/Location/X').set(13.82617597002536);
-    db.ref('Users/guyza' + i + '/Location/Y').set(100.5141126550734);
-    for (var j = 0; j < questionId.length; j++) {
-      db.ref('Users/guyza' + i + '/Questions/' + questionId[j]).set({
-        "id": questionId[j],
-        "question": Math.floor(Math.random() * 2),
-        "weight": weight[Math.floor(Math.random() * 5)]
-      });
-    }
+const fetchData = () => {
+  return new Promise((resolve, reject) => {
+    axios.get('https://randomuser.me/api/?results=50').then((response) => {
+      return resolve(response.data.results)
+    }).catch(e => {
+      return reject(e)
+    })
+  })
+}
+
+exports.addRandomUsers = functions.https.onRequest(async (request, response) => {
+  try {
+    const questionId = ["-MbG2uBL_SF74crhz4gi", "-MbG2uBN1lyRazcdiGpO", "-MbG2uBN1lyRazcdiGpP", "-MbG2uBOQdeFOC1U_ZyV", "-MbG2uBPzIBZnS1YstKg",
+      "-MbG2uBPzIBZnS1YstKh", "-MbG2uBQGy2Y91GV8QAE", "-MbG2uBQGy2Y91GV8QAF", "-MbG2uBRC2C6TmlBt9mk", "-MbG2uBRC2C6TmlBt9ml",
+      "-MbG2uBS8Ir0mqMmldku", "-MbG2uBTJYJscSa_XcVu", "-MbG2uBTJYJscSa_XcVv", "-MbG2uBUWGoswpgDi0SW", "-MbG2uBUWGoswpgDi0SX"];
+    const weight = [1, 10, 100, 150, 250];
+    const result = await fetchData();
+    result.forEach((item, index) => {
+      const uid = item.login.username
+      db.ref(`Users/${uid}`).set({
+        'Age': item.dob.age > 60 ? 45 : (item.dob.age - 10) < 20 ? 25 : (item.dob.age - 10),
+        'birth': 909100800000,
+        'date': new Date().getTime(),
+        'name': (item.name.first || "Mark") + " " + (item.name.last || "Johnson"),
+        'sex': item.gender === 'female' ? "Female" : "Male",
+        "Distance": "Untitled",
+        "MaxAdmob": 10,
+        "MaxChat": 20,
+        "MaxLike": 20,
+        "MaxStar": 5,
+        "OppositeUserAgeMax": 70,
+        "OppositeUserAgeMin": 18,
+        "OppositeUserSex": "All",
+        "Vip": 0,
+        "status": 0
+      })
+      db.ref(`Users/${uid}/ProfileImage/profileImageUrl0`).set(
+        item.picture.large ? item.picture.large
+          : item.picture.medium ? item.picture.medium
+            : (item.picture.thumbnail || "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca")
+      );
+      db.ref(`Users/${uid}/Location/X`).set(13.82617597002536);
+      db.ref(`Users/${uid}/Location/Y`).set(100.5141126550734);
+      for (var j = 0; j < questionId.length; j++) {
+        db.ref(`Users/${uid}/Questions/` + questionId[j]).set({
+          "id": questionId[j],
+          "question": Math.floor(Math.random() * 2),
+          "weight": weight[Math.floor(Math.random() * 5)]
+        });
+      }
+      console.log('result ===>', `success : ${index}`);
+    })
+  } catch (e) {
+    console.log(e);
   }
 });
 
