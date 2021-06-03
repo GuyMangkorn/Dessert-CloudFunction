@@ -196,7 +196,7 @@ exports.addRandomUsers = functions.https.onRequest(async (request, response) => 
     result.forEach((item, index) => {
       const uid = item.login.username
       db.ref(`Users/${uid}`).set({
-        'Age': item.dob.age > 60 ? 45 : (item.dob.age - 10) < 20 ? 25 : (item.dob.age - 10),
+        'Age': item.dob.age > 60 ? 45 : (item.dob.age - 10) < 23 ? 23 : (item.dob.age - 10),
         'birth': 909100800000,
         'date': new Date().getTime(),
         'name': (item.name.first || "Mark") + " " + (item.name.last || "Johnson"),
