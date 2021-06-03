@@ -1,11 +1,11 @@
-const { nthRoot, sqrt, e, add } = require('mathjs')
+const { nthRoot, sqrt, e, add } = require('mathjs');
 const functions = require('firebase-functions');
+const { Change } = require('firebase-functions');
 const axios = require('axios')
 const admin = require('firebase-admin');
 admin.initializeApp();
 
 const { database, firestore } = require('firebase-admin');
-const { ref } = require('firebase-functions/lib/providers/database');
 
 
 
@@ -177,11 +177,11 @@ exports.addQuestions = functions.https.onCall((data, context) => {
 
 exports.addUsersGuyza = functions.https.onRequest((request, response) => {
   const imageProfile = [
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F17EMUK2pOjYUih8hNy17Ed866S02%2FprofileImageUrl0?alt=media&token=67a05672-2f5a-4282-beed-8cc2e6bf4652",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F2VUqLvFpClTYwAkXOJJgFSUdPsC3%2FprofileImageUrl0?alt=media&token=12d2b00a-8221-4691-899b-0359b1bed2af",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F35y5YHvB6hWNyIXCHvfqPrBt8uA2%2FprofileImageUrl0?alt=media&token=90c9b63e-289f-4278-bf19-7c6cb1998366",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F35y5YHvB6hWNyIXCHvfqPrBt8uA2%2FprofileImageUrl0?alt=media&token=90c9b63e-289f-4278-bf19-7c6cb1998366",
-    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FC7nwzXMwncZ7NVN9mkeuo0vq0xr2%2FprofileImageUrl0?alt=media&token=24f27193-ad6b-45cf-a50c-fd261e9406c4"
+    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
+    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
+    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
+    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca",
+    "https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2F0xTNIc6LZHTG0Y68x1fMGpdvrRj2%2FprofileImageUrl0?alt=media&token=3b5a6d1a-c2c7-41ee-ad71-62329b26e6ca"
   ];
   const questionId = ["-MJwHY62WnK_d3mhh2yC", "-MJwHY63sOXwRwtMYVH5", "-MJwHY656cvFC9oNs0de", "-MJwHY66d4wk-YPDyIgV", "-MJwHY68p76QhGBDylb7",
     "-MJwHY69kHBcls75av7O", "-MJwHY6BEGTeYEI4t6iV", "-MJwHY6CXQYHot9NCONO", "-MJwHY6EsYYYfG0rk-dW", "-MJwHY6HtUXkjESVyS3q",
@@ -192,8 +192,8 @@ exports.addUsersGuyza = functions.https.onRequest((request, response) => {
     db.ref('Users/guyza' + i).set({
       "Age": 18,
       "birth": 909100800000,
-      "date": 1605952310999,
-      "name": Guyza + i,
+      "date": new Date().getTime(),
+      "name": 'Guyza' + i,
       "sex": sex[Math.floor(Math.random() * 2)],
       "Distance": "Untitled",
       "MaxAdmob": 10,
@@ -219,9 +219,9 @@ exports.addUsersGuyza = functions.https.onRequest((request, response) => {
   }
 });
 
-// NOTE addQuestionProgramically
+// NOTE addQuestionProgrammatically
 
-exports.addQuestionProgramically = functions.https.onRequest((request, response) => {
+exports.addQuestionProgrammatically = functions.https.onRequest((request, response) => {
   const refQA = db.ref('Question/th');
   const refQAEnglish = db.ref('Question/en');
   const refStartth = db.ref('RegisterQuestion/th');
@@ -1710,3 +1710,352 @@ exports.sendnotificationMatch = functions.database.ref('/Users/{userId}/connecti
 });
 
 // !SECTION
+
+
+// SECTION Mai Functions
+const ref = db.ref("Users");
+
+function calculateAge(DOB) { // birthday is a date
+  var today = new Date();
+  var birthDate = new Date(DOB);
+  var age = today.getUTCFullYear() - birthDate.getUTCFullYear();
+  var m = today.getUTCMonth() - birthDate.getUTCMonth();
+  if (m < 0 || (m === 0 && today.getUTCDate() < birthDate.getUTCDate())) {
+    age = age - 1;
+  }
+
+  return age;
+}
+console.log(calculateTime(1598428015326));
+function calculateTime(time) {
+  var today = new Date();
+  var birthDate = new Date(time);
+  var Difference_In_Time = today.getTime() - birthDate.getTime();
+  var Difference_In_Days = parseInt(Difference_In_Time / (1000 * 3600 * 24));
+  if (Difference_In_Days > 0) {
+    return "d" + (Difference_In_Days);
+  }
+  else if (today.getHours() - birthDate.getHours() !== 0) {
+    var h = today.getHours() - birthDate.getHours();
+    if (h < 0)
+      h = h + 24;
+    return "h" + (h);
+  }
+  else if (today.getMinutes() - birthDate.getMinutes() !== 0) {
+    return "m" + (today.getMinutes() - birthDate.getMinutes());
+  }
+  else return "00";
+}
+
+// NOTE getUser
+
+function getUser(data, parse_obj3, dataSnapshot, currentUid) {
+  var lat1 = data.x_user;
+  var lat2 = dataSnapshot.child("Location").child("X").val();
+  var lon1 = data.y_user;
+  var lon2 = dataSnapshot.child("Location").child("Y").val();
+  var lonlon = (Math.PI / 180) * (lon2 - lon1);
+  var latlat = (Math.PI / 180) * (lat2 - lat1);
+  var lat1r = (Math.PI / 180) * (lat1);
+  var lat2r = (Math.PI / 180) * (lat2);
+  var R = 6371.0;
+  var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var distance_other = R * c;
+  if (distance_other < data.distance) {
+    var parse_obj2 = {};
+    parse_obj2 = dataSnapshot.val();
+    var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
+    var t = str.substring(0, 1);
+    var s = str.substring(1);
+    if (t === "d") {
+      if (s <= 14) {
+        if (dataSnapshot.child("star_s").hasChild(currentUid)) {
+          parse_obj2.starS = 1;
+          console.log(dataSnapshot.key);
+        } else parse_obj2.starS = 0;
+
+        parse_obj2.typeTime = t;
+        parse_obj2.time = s;
+        parse_obj2.distance_other = distance_other;
+        parse_obj2.key = dataSnapshot.key;
+        parse_obj3.push(parse_obj2)
+      }
+    }
+    else {
+      if (dataSnapshot.child("star_s").hasChild(currentUid)) {
+        parse_obj2.starS = 1;
+        console.log(dataSnapshot.key);
+      } else parse_obj2.starS = 0;
+      parse_obj2.typeTime = t;
+      parse_obj2.time = s;
+      parse_obj2.distance_other = distance_other;
+      parse_obj2.key = dataSnapshot.key;
+      parse_obj3.push(parse_obj2)
+    }
+
+  }
+}
+
+// NOTE getUser2
+
+function getUser2(data, parse_obj, dataSnapshot) {
+  var lat1 = data.x_user;
+  var lat2 = dataSnapshot.child("Location").child("X").val();
+  var lon1 = data.y_user;
+  var lon2 = dataSnapshot.child("Location").child("Y").val();
+  var lonlon = (Math.PI / 180) * (lon2 - lon1);
+  var latlat = (Math.PI / 180) * (lat2 - lat1);
+  var lat1r = (Math.PI / 180) * (lat1);
+  var lat2r = (Math.PI / 180) * (lat2);
+  var R = 6371.0;
+  var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var distance_other = R * c;
+  if (distance_other < data.distance) {
+    var parse_obj2 = {};
+    parse_obj2 = dataSnapshot.val();
+    if (dataSnapshot.hasChild("date")) {
+      var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
+      var t = str.substring(0, 1);
+      var s = str.substring(1);
+      if (t === "d") {
+        if (s <= 14) {
+          parse_obj2.typeTime = t;
+          parse_obj2.time = s;
+          parse_obj2.distance_other = distance_other;
+          parse_obj2.key = dataSnapshot.key;
+          parse_obj.push(parse_obj2)
+        }
+      }
+      else {
+        parse_obj2.typeTime = t;
+        parse_obj2.time = s;
+        parse_obj2.distance_other = distance_other;
+        parse_obj2.key = dataSnapshot.key;
+        parse_obj.push(parse_obj2)
+      }
+
+    }
+
+  }
+}
+
+// NOTE getUserCard
+
+exports.getUserCard = functions.https.onCall((data, context) => {
+  var parse_obj3 = [];
+  return db.ref("Users").once("value", function (snapshot) {
+
+    var currentUid = context.auth.uid;
+    if (data.sex === "All") {
+      snapshot.forEach(function (dataSnapshot) {
+        if (dataSnapshot.key !== currentUid
+          && dataSnapshot.child("Age").val() >= data.min
+          && dataSnapshot.child("Age").val() <= data.max
+          && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
+          && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
+          && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
+          && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
+          && !dataSnapshot.hasChild("off_card")
+        ) {
+          getUser(data, parse_obj3, dataSnapshot, currentUid);
+        }
+      });
+    }
+    else {
+
+      snapshot.forEach(function (dataSnapshot) {
+        if (dataSnapshot.key !== currentUid
+          && dataSnapshot.child("sex").val() === data.sex
+          && dataSnapshot.child("Age").val() >= data.min
+          && dataSnapshot.child("Age").val() <= data.max
+          && !dataSnapshot.hasChild("off_card")
+          && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
+          && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
+          && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
+          && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
+        ) {
+          getUser(data, parse_obj3, dataSnapshot, currentUid);
+
+        }
+      });
+    }
+  }).then(() => {
+    parse_obj3.sort(function (a, b) {
+
+      if (a.starS !== b.starS) return (a.starS < b.starS) ? 1 : -1;
+      if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
+      return (a.distance_other < b.distance_other) ? -1 : 1;
+
+    });
+
+    var o = parse_obj3.slice(data.prelimit, data.limit);
+    return { o };
+  });
+
+});
+
+//NOTE getUserList
+
+exports.getUserList = functions.https.onCall((data, context) => {
+  var parse_obj = [];
+  return db.ref("Users").once("value", function (snapshot) {
+    var currentUid = context.auth.uid;
+    if (data.sex === "All") {
+      console.log("1");
+      snapshot.forEach(function (dataSnapshot) {
+        if (dataSnapshot.key !== currentUid
+          && dataSnapshot.child("Age").val() >= data.min
+          && dataSnapshot.child("Age").val() <= data.max
+          && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
+          && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
+          && !dataSnapshot.hasChild("off_list")
+        ) {
+          getUser2(data, parse_obj, dataSnapshot);
+
+        }
+      });
+    }
+    else {
+      snapshot.forEach(function (dataSnapshot) {
+        if (dataSnapshot.key !== currentUid
+          && dataSnapshot.child("sex").val() === data.sex
+          && dataSnapshot.child("Age").val() >= data.min
+          && dataSnapshot.child("Age").val() <= data.max
+          && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
+          && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
+          && !dataSnapshot.hasChild("off_list")
+        ) {
+          getUser2(data, parse_obj, dataSnapshot);
+
+        }
+      });
+    }
+
+  }).then(() => {
+    parse_obj.sort(function (a, b) {
+      if (b.status !== a.status) return (b.status < a.status) ? -1 : 1;
+      return (a.distance_other < b.distance_other) ? -1 : 1;
+    });
+    var o = parse_obj.slice(data.prelimit, data.limit);
+    return { o };
+  });
+});
+
+//NOTE addUser
+
+exports.addUser = functions.https.onRequest((request, response) => {
+  var i
+  for (i = 0; i <= 200; i++) {
+    var id = "test" + i
+    db.ref("Users/" + id + "/name").set("test" + i);
+    db.ref("Users/" + id + "/Vip").set(0);
+    db.ref('Users/' + id + '/Age').set(Math.floor(Math.random() * 70) + 18);
+    db.ref('Users/' + id + '/Distance').set("Untitled");
+    db.ref('Users/' + id + '/OppositeUserAgeMax').set(70);
+    db.ref('Users/' + id + '/OppositeUserAgeMin').set(18);
+    db.ref('Users/' + id + '/OppositeUserSex').set("All");
+    switch (Math.floor(Math.random() * 2)) {
+      case 0: db.ref('Users/' + id + '/sex').set("Male");
+        break;
+      case 1: db.ref('Users/' + id + '/sex').set("Female");
+        break;
+    }
+    switch (Math.floor(Math.random() * 3)) {
+      case 0: db.ref('Users/' + id + '/ProfileImage/profileImageUrl0').set("https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FhloAcfQbgyND8v83ySCln2Kh4gB3%2FprofileImageUrl0?alt=media&token=fb2a0ddc-e936-462d-9d9f-1c65b2cfeca3");
+        break;
+      case 1: db.ref('Users/' + id + '/ProfileImage/profileImageUrl0').set("https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FhloAcfQbgyND8v83ySCln2Kh4gB3%2FprofileImageUrl1?alt=media&token=d8190401-9133-4c06-b3aa-a3f05628c5ca");
+        break;
+      case 2: db.ref('Users/' + id + '/ProfileImage/profileImageUrl0').set("https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FhloAcfQbgyND8v83ySCln2Kh4gB3%2FprofileImageUrl2?alt=media&token=77060af2-5c3a-4aa4-a21b-7a10837618d4");
+        break;
+
+    }
+
+    db.ref('Users/' + id + '/date').set(1603442692408);
+    db.ref('Users/' + id + '/status').set(0);
+    db.ref('Users/' + id + '/Location/X').set(13.8103942);
+    db.ref('Users/' + id + '/Location/Y').set(100.692658);
+    db.ref('Users/' + id + '/MaxLike').set(40);
+    db.ref('Users/' + id + '/MaxChat').set(20);
+    db.ref('Users/' + id + '/MaxAdmob').set(10);
+    db.ref('Users/' + id + '/MaxStar').set(3);
+    db.ref('Users/' + id + '/birth').set(906854400000);
+  }
+
+});
+
+//NOTE resetLike1
+
+exports.resetLike1 = functions.pubsub.schedule('0 0 * * *')
+  .timeZone('Asia/Bangkok')
+  .onRun((context) => {
+    db.ref("Users").on("child_added", function (snapshot) {
+      db.ref('Users/' + snapshot.key + '/MaxLike').set(40);
+      db.ref('Users/' + snapshot.key + '/MaxChat').set(20);
+      db.ref('Users/' + snapshot.key + '/MaxStar').set(3);
+      db.ref('Users/' + snapshot.key + '/MaxAdmob').set(10);
+      db.ref('Users/' + snapshot.key + '/Report').set(null);
+      db.ref('Users/' + snapshot.key + '/PutReportId').set(null);
+      var age = snapshot.child("Age").val();
+      var calculate = calculateAge(parseFloat(snapshot.child("birth").val()));
+      if (age !== calculate)
+        db.ref('Users/' + snapshot.key + '/Age').set(calculate);
+    });
+    console.log("ทำแล้ว");
+    return false;
+  });
+
+//NOTE resetLike2
+
+exports.resetLike2 = functions.pubsub.schedule('0 12 * * *')
+  .timeZone('Asia/Bangkok')
+  .onRun((context) => {
+    db.ref("Users").on("child_added", function (snapshot) {
+      db.ref('Users/' + snapshot.key + '/MaxLike').set(40);
+      db.ref('Users/' + snapshot.key + '/MaxChat').set(20);
+      db.ref('Users/' + snapshot.key + '/MaxAdmob').set(10);
+      console.log(snapshot.key + "");
+    });
+    console.log("ทำแล้ว");
+    return false;
+  });
+
+//NOTE report_listener
+
+exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpdate((Change, context) => {
+  var Count = 0;
+  var userId = context.params.userId;
+  const ref = db.ref("Users");
+  ref.child(userId).child("Report").on("child_added", function (snapshot) {
+    Count = Count + parseInt(snapshot.val());
+    console.log(Count);
+    if (parseInt(snapshot.val()) >= 4) {
+      console.log('Successfully deleted user');
+      ref.child(userId).remove();
+      db.ref("BlackList").child(userId).set(true)
+      ref.on("child_added", function (snapshot) {
+        if (snapshot.child("connection").child("yep").hasChild(userId)) {
+          ref.child(snapshot.key).child("connection").child("yep").child(userId).remove();
+
+        }
+        if (snapshot.child("connection").child("nope").hasChild(userId)) {
+          ref.child(snapshot.key).child("connection").child("nope").child(userId).remove();
+        }
+        if (snapshot.child("connection").child("matches").hasChild(userId)) {
+          ref.child(snapshot.key).child("connection").child("matches").child(userId).remove();
+        }
+        if (snapshot.child("connection").child("chatna").hasChild(userId)) {
+          ref.child(snapshot.key).child("connection").child("chatna").child(userId).remove();
+        }
+        if (snapshot.child("see_profile").hasChild(userId)) {
+          ref.child(snapshot.key).child("see_profile").child(userId).remove();
+        }
+      });
+    }
+  });
+});
+
+// !SECTION
+
+
