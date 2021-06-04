@@ -14,6 +14,23 @@ const db = admin.database();
 
 // SECTION Guy Functions
 
+// NOTE adminRole
+
+exports.adminRole = functions.https.onCall((data, context) => {
+  return admin.auth().getUserByEmail(data.email).then(user => {
+    return admin.auth().setCustomUserClaims(user.uid, {
+      admin: true
+    })
+  }).then(() => {
+    return {
+      message: `Success! ${data.email} has been made an admin`
+    }
+  }).catch(err => {
+    return err;
+  });
+});
+
+
 // NOTE resetUsers
 
 exports.resetUsers = functions.https.onRequest((req, res) => {
