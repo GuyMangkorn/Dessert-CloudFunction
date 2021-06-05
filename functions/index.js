@@ -6,13 +6,47 @@ const moment = require('moment')
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-const { database, firestore } = require('firebase-admin');
-
-
 
 const db = admin.database();
 
 // SECTION Guy Functions
+
+
+// NOTE closeAccount 
+
+exports.closeAccount = functions.https.onCall(async (data, context) => {
+  const userId = context.auth.uid;
+  // const userId = data.uid
+  const ref = db.ref("Users");
+  const res = await admin.database().ref('/Users').once('value').then(snap => {
+    snap.forEach((snapChild) => {
+      const key = snapChild.key
+      if (snapChild.child("connection").child("yep").hasChild(userId)) {
+        ref.child(key).child("connection").child("yep").child(userId).remove();
+      }
+      if (snapChild.child("connection").child("nope").hasChild(userId)) {
+        ref.child(key).child("connection").child("nope").child(userId).remove();
+      }
+      if (snapChild.child("connection").child("matches").hasChild(userId)) {
+        ref.child(key).child("connection").child("nope").child(userId).remove();
+      }
+      if (snapChild.child("connection").child("chatna").hasChild(userId)) {
+        ref.child(key).child("connection").child("chatna").child(userId).remove();
+      }
+      if (snapChild.child("see_profile").hasChild(userId)) {
+        ref.child(key).child("see_profile").child(userId).remove();
+      }
+    })
+    return { message: 'Success' }
+  }).catch(e => {
+    return {
+      error: e
+    }
+  })
+  return {
+    res: res
+  }
+})
 
 // NOTE adminRole
 
@@ -106,7 +140,6 @@ exports.getPercentageMatching = functions.https.onCall((data, context) => {
           for (var i = 0; i < listQAuid.length; i++) {
             var other = snap.child(userSnapshot.key).child('Questions').child(listQAuid[i]['id']).val();
             if (other !== null) {
-              console.log("value", other.toString());
               listQAother.push(other);
             }
           }
@@ -2068,7 +2101,6 @@ exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpda
       ref.on("child_added", function (snapshot) {
         if (snapshot.child("connection").child("yep").hasChild(userId)) {
           ref.child(snapshot.key).child("connection").child("yep").child(userId).remove();
-
         }
         if (snapshot.child("connection").child("nope").hasChild(userId)) {
           ref.child(snapshot.key).child("connection").child("nope").child(userId).remove();
