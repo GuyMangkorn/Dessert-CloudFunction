@@ -3,6 +3,7 @@ const functions = require('firebase-functions');
 const axios = require('axios')
 const admin = require('firebase-admin');
 const { questionsFeedback, questionsRegister, questionStock } = require('./constant/questions');
+const { checkConnection, getDistanceOpposite, calculatePercent } = require('./utils/helper');
 admin.initializeApp();
 
 
@@ -275,6 +276,7 @@ exports.addRandomUsers = functions.https.onRequest(async (request, response) => 
       console.log('result ===>', `success : ${index}`);
     })
     response.send(200);
+    // eslint-disable-next-line no-catch-shadow
   } catch (e) {
     console.log(e.message);
   }
@@ -496,55 +498,7 @@ function calculateTime(time) {
   else return "00";
 }
 
-// NOTE getUser
 
-function getUser(data, parse_obj3, dataSnapshot, currentUid) {
-  var lat1 = data.x_user;
-  var lat2 = dataSnapshot.child("Location").child("X").val();
-  var lon1 = data.y_user;
-  var lon2 = dataSnapshot.child("Location").child("Y").val();
-  var lonlon = (Math.PI / 180) * (lon2 - lon1);
-  var latlat = (Math.PI / 180) * (lat2 - lat1);
-  var lat1r = (Math.PI / 180) * (lat1);
-  var lat2r = (Math.PI / 180) * (lat2);
-  var R = 6371.0;
-  var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var distance_other = R * c;
-  if (distance_other < data.distance) {
-    var parse_obj2 = {};
-    parse_obj2 = dataSnapshot.val();
-    var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
-    var t = str.substring(0, 1);
-    var s = str.substring(1);
-    if (t === "d") {
-      if (s <= 14) {
-        if (dataSnapshot.child("star_s").hasChild(currentUid)) {
-          parse_obj2.starS = 1;
-          console.log(dataSnapshot.key);
-        } else parse_obj2.starS = 0;
-
-        parse_obj2.typeTime = t;
-        parse_obj2.time = s;
-        parse_obj2.distance_other = distance_other;
-        parse_obj2.key = dataSnapshot.key;
-        parse_obj3.push(parse_obj2)
-      }
-    }
-    else {
-      if (dataSnapshot.child("star_s").hasChild(currentUid)) {
-        parse_obj2.starS = 1;
-        console.log(dataSnapshot.key);
-      } else parse_obj2.starS = 0;
-      parse_obj2.typeTime = t;
-      parse_obj2.time = s;
-      parse_obj2.distance_other = distance_other;
-      parse_obj2.key = dataSnapshot.key;
-      parse_obj3.push(parse_obj2)
-    }
-
-  }
-}
 
 // NOTE getUser2
 
@@ -590,60 +544,170 @@ function getUser2(data, parse_obj, dataSnapshot) {
   }
 }
 
-// NOTE getUserCard
-
-exports.getUserCard = functions.https.onCall((data, context) => {
-  var parse_obj3 = [];
-  return db.ref("Users").once("value", (snapshot) => {
-
-    var currentUid = context.auth.uid;
-    if (data.sex === "All") {
-      snapshot.forEach((dataSnapshot) => {
-        if (dataSnapshot.key !== currentUid
-          && dataSnapshot.child("Age").val() >= data.min
-          && dataSnapshot.child("Age").val() <= data.max
-          && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
-          && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
-          && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
-          && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
-          && !dataSnapshot.hasChild("off_card")
-        ) {
-          getUser(data, parse_obj3, dataSnapshot, currentUid);
-        }
-      });
+const getPercentList = (data, dataUser, currentItem) => {
+  let result = dataUser.map((item) => {
+    const distance_other = getDistanceOpposite(data.x_user, data.y_user, item["Location"]["X"], item["Location"]["Y"])
+    const str = calculateTime(parseFloat(item["date"]));
+    const t = str.substring(0, 1);
+    const s = str.substring(1);
+    const percent = calculatePercent(item, currentItem)
+    if (t === "d" && s <= 14) {
+      item.percent = percent
+      item.typeTime = t;
+      item.distance_other = distance_other
+      item.time = s;
     }
     else {
-
-      snapshot.forEach((dataSnapshot) => {
-        if (dataSnapshot.key !== currentUid
-          && dataSnapshot.child("sex").val() === data.sex
-          && dataSnapshot.child("Age").val() >= data.min
-          && dataSnapshot.child("Age").val() <= data.max
-          && !dataSnapshot.hasChild("off_card")
-          && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
-          && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
-          && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
-          && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
-        ) {
-          getUser(data, parse_obj3, dataSnapshot, currentUid);
-
-        }
-      });
+      item.percent = percent
+      item.typeTime = t;
+      item.time = s;
+      item.distance_other = distance_other
     }
-  }).then(() => {
-    parse_obj3.sort((a, b) => {
+    return item
+  })
+  return result
+}
 
-      if (a.starS !== b.starS) return (a.starS < b.starS) ? 1 : -1;
-      if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
-      return (a.distance_other < b.distance_other) ? -1 : 1;
+// NOTE getUserCard
 
-    });
-
-    var o = parse_obj3.slice(data.prelimit, data.limit);
-    return { o };
+exports.getUserCard = functions.https.onCall(async (data, context) => {
+  let parse_obj3 = [];
+  const snap = await db.ref("Users").once("value")
+  const mainData = snap.val();
+  const rearrageData = Object.keys(mainData).map((key) => {
+    mainData[key].key = key
+    return mainData[key]
+  })
+  // const currentUid = context.auth.uid;
+  const currentUid = data.uid
+  const currentItem = rearrageData.find((item) => item.key === currentUid)
+  if (data.sex === 'All') {
+    const filterList = rearrageData.filter((item) => {
+      return item.key !== currentUid &&
+        item.Age >= data.min &&
+        item.Age <= data.max &&
+        checkConnection(item, currentUid) &&
+        !Object.prototype.hasOwnProperty.call(item, 'off_card')
+    })
+    parse_obj3 = getPercentList(data, filterList, currentItem)
+  } else {
+    const filterList = rearrageData.filter((item) => {
+      console.log(item.sex, data.sex)
+      return item.key !== currentUid &&
+        item.Age >= data.min &&
+        item.Age <= data.max &&
+        checkConnection(item, currentUid) &&
+        item.sex === data.sex &&
+        !Object.prototype.hasOwnProperty.call(item, 'off_card')
+    })
+    parse_obj3 = getPercentList(data, filterList, currentItem)
+  }
+  parse_obj3.sort((a, b) => {
+    if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
+    return (a.percent > b.percent) ? -1 : 1;
   });
-
+  let o = parse_obj3.slice(data.prelimit, data.limit);
+  console.log('result ====>', o);
+  return { o };
 });
+
+
+// NOTE getUser
+
+// function getUser(data, parse_obj3, dataSnapshot, currentUid) {
+//   var lat1 = data.x_user;
+//   var lat2 = dataSnapshot.child("Location").child("X").val();
+//   var lon1 = data.y_user;
+//   var lon2 = dataSnapshot.child("Location").child("Y").val();
+//   var lonlon = (Math.PI / 180) * (lon2 - lon1);
+//   var latlat = (Math.PI / 180) * (lat2 - lat1);
+//   var lat1r = (Math.PI / 180) * (lat1);
+//   var lat2r = (Math.PI / 180) * (lat2);
+//   var R = 6371.0;
+//   var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
+//   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//   var distance_other = R * c;
+//   if (distance_other < data.distance) {
+//     var parse_obj2 = {};
+//     parse_obj2 = dataSnapshot.val();
+//     var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
+//     var t = str.substring(0, 1);
+//     var s = str.substring(1);
+//     if (t === "d") {
+//       if (s <= 14) {
+//         if (dataSnapshot.child("star_s").hasChild(currentUid)) {
+//           parse_obj2.starS = 1;
+//           console.log(dataSnapshot.key);
+//         } else parse_obj2.starS = 0;
+
+//         parse_obj2.typeTime = t;
+//         parse_obj2.time = s;
+//         parse_obj2.distance_other = distance_other;
+//         parse_obj2.key = dataSnapshot.key;
+//         parse_obj3.push(parse_obj2)
+//       }
+//     }
+//     else {
+//       if (dataSnapshot.child("star_s").hasChild(currentUid)) {
+//         parse_obj2.starS = 1;
+//         console.log(dataSnapshot.key);
+//       } else parse_obj2.starS = 0;
+//       parse_obj2.typeTime = t;
+//       parse_obj2.time = s;
+//       parse_obj2.distance_other = distance_other;
+//       parse_obj2.key = dataSnapshot.key;
+//       parse_obj3.push(parse_obj2)
+//     }
+
+//   }
+// }
+
+
+// exports.getUserCard = functions.https.onCall((data, context) => {
+//   var parse_obj3 = [];
+//   return db.ref("Users").once("value", (snapshot) => {
+//     var currentUid = context.auth.uid;
+//     if (data.sex === "All") {
+//       snapshot.forEach((dataSnapshot) => {
+//         if (dataSnapshot.key !== currentUid
+//           && dataSnapshot.child("Age").val() >= data.min
+//           && dataSnapshot.child("Age").val() <= data.max
+//           && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
+//           && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
+//           && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
+//           && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
+//           && !dataSnapshot.hasChild("off_card")
+//         ) {
+//           getUser(data, parse_obj3, dataSnapshot, currentUid);
+//         }
+//       });
+//     }
+//     else {
+//       snapshot.forEach((dataSnapshot) => {
+//         if (dataSnapshot.key !== currentUid
+//           && dataSnapshot.child("sex").val() === data.sex
+//           && dataSnapshot.child("Age").val() >= data.min
+//           && dataSnapshot.child("Age").val() <= data.max
+//           && !dataSnapshot.hasChild("off_card")
+//           && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
+//           && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
+//           && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
+//           && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
+//         ) {
+//           getUser(data, parse_obj3, dataSnapshot, currentUid);
+//         }
+//       });
+//     }
+//   }).then(() => {
+//     parse_obj3.sort((a, b) => {
+//       if (a.starS !== b.starS) return (a.starS < b.starS) ? 1 : -1;
+//       if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
+//       return (a.distance_other < b.distance_other) ? -1 : 1;
+//     });
+//     var o = parse_obj3.slice(data.prelimit, data.limit);
+//     return { o };
+//   });
+// });
 
 //NOTE getUserList
 
