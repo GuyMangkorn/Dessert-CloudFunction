@@ -578,8 +578,8 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
     mainData[key].key = key
     return mainData[key]
   })
-  // const currentUid = context.auth.uid;
-  const currentUid = data.uid
+  const currentUid = context.auth.uid;
+  // const currentUid = data.uid
   const currentItem = rearrageData.find((item) => item.key === currentUid)
   if (data.sex === 'All') {
     const filterList = rearrageData.filter((item) => {
@@ -607,7 +607,6 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
     return (a.percent > b.percent) ? -1 : 1;
   });
   let o = parse_obj3.slice(data.prelimit, data.limit);
-  console.log('result ====>', o);
   return { o };
 });
 

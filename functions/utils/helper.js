@@ -13,6 +13,7 @@ const checkConnection = (item, currentUid) => {
 const calculatePercent = (itemOpposite, currentItem) => {
   let listQAuid = [];
   let listQAother = [];
+  let reserve = []
   let percentUid;
   let percentOther;
   let result = 0;
@@ -20,39 +21,42 @@ const calculatePercent = (itemOpposite, currentItem) => {
   let sumOter = 0;
   let maxUID = 0;
   let maxOtherID = 0;
+  let number_result = 0
   if (Object.prototype.hasOwnProperty.call(currentItem, 'Questions')) {
-    Object.values(currentItem['Questions']).forEach((item) => {
-      listQAuid.push(item);
-    })
+    reserve = Object.values(currentItem['Questions']).map((item) => item)
     if (Object.prototype.hasOwnProperty.call(itemOpposite, 'Questions')) {
-      for (var i = 0; i < listQAuid.length; i++) {
-        var other = itemOpposite['Questions'][listQAuid[i].id];
-        if (other !== null) {
-          listQAother.push(other);
+      reserve.forEach((item) => {
+        if (isEmpty(itemOpposite["Questions"][item.id])) {
+          listQAuid.push(item)
+          listQAother.push(itemOpposite["Questions"][item.id])
         }
-      }
-      for (var j = 0; j < listQAother.length; j++) {
-        maxOtherID = maxOtherID + listQAother[j]['weight'];
-        maxUID = maxUID + listQAuid[j]['weight'];
-        if (listQAother[j]['question'] === listQAuid[j]['question']) {
-          sumUID = sumUID + listQAother[j]['weight'];
-          sumOter = sumOter + listQAuid[j]['weight'];
+      })
+      // console.log('==============================================================================');
+      // console.log(`name_opposite : ${itemOpposite.name} , name_user : ${currentItem.name}`);
+      listQAuid.forEach((itemUser, index) => {
+        maxOtherID += listQAother[index]['weight'];
+        maxUID += itemUser['weight'];
+        if (listQAother[index]['question'] === itemUser['question']) {
+          // console.log('User ===> ', `question: ${itemUser.question} , weight: ${itemUser.weight}`, ', Opposite ===>', `question: ${listQAother[index].question} , weigth: ${listQAother[index].weight}`);
+          sumUID += listQAother[index]['weight'];
+          sumOter += itemUser['weight'];
         }
-      }
+      })
+      // console.log('User ===> ', `max: ${maxUID}`, ', Opposite ===>', `max: ${maxOtherID}`);
       percentUid = (sumUID / maxOtherID) * 100;
       percentOther = (sumOter / maxUID) * 100;
       result = sqrt(percentUid * percentOther);
       if (isNaN(result)) {
         result = 0;
       } else {
-        var number_result = Math.floor(result);
+        number_result = Math.floor(result);
       }
       return number_result
     } else {
       return number_result
     }
   }
-  return 0
+  return number_result
 }
 
 const getDistanceOpposite = (x_user, y_user, x_opp, y_opp) => {
