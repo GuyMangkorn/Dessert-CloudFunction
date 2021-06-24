@@ -477,7 +477,7 @@ function calculateAge(DOB) { // birthday is a date
 
   return age;
 }
-console.log(calculateTime(1598428015326));
+
 function calculateTime(time) {
   var today = new Date();
   var birthDate = new Date(time);
@@ -544,6 +544,8 @@ function getUser2(data, parse_obj, dataSnapshot) {
   }
 }
 
+// ANCHOR getPercnetforopposite
+
 const getPercentList = (data, dataUser, currentItem) => {
   let result = dataUser.map((item) => {
     const distance_other = getDistanceOpposite(data.x_user, data.y_user, item["Location"]["X"], item["Location"]["Y"])
@@ -573,6 +575,8 @@ const getPercentList = (data, dataUser, currentItem) => {
 exports.getUserCard = functions.https.onCall(async (data, context) => {
   let parse_obj3 = [];
   const snap = await db.ref("Users").once("value")
+  const blacklist = await db.ref("BlackList").once("value")
+  const blacklistData = blacklist.val() || {}
   const mainData = snap.val();
   const rearrageData = Object.keys(mainData).map((key) => {
     mainData[key].key = key
@@ -584,6 +588,7 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
   if (data.sex === 'All') {
     const filterList = rearrageData.filter((item) => {
       return item.key !== currentUid &&
+        !Object.prototype.hasOwnProperty.call(blacklistData, item.key) &&
         item.Age >= data.min &&
         item.Age <= data.max &&
         checkConnection(item, currentUid) &&
@@ -592,8 +597,8 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
     parse_obj3 = getPercentList(data, filterList, currentItem)
   } else {
     const filterList = rearrageData.filter((item) => {
-      console.log(item.sex, data.sex)
       return item.key !== currentUid &&
+        !Object.prototype.hasOwnProperty.call(blacklistData, item.key) &&
         item.Age >= data.min &&
         item.Age <= data.max &&
         checkConnection(item, currentUid) &&
@@ -712,12 +717,13 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
 
 exports.getUserList = functions.https.onCall((data, context) => {
   var parse_obj = [];
-  return db.ref("Users").once("value", (snapshot) => {
+  return db.ref("/").once("value", async (snapshot) => {
     var currentUid = context.auth.uid;
+    // const currentUid = data.uid
     if (data.sex === "All") {
-      console.log("1");
-      snapshot.forEach((dataSnapshot) => {
-        if (dataSnapshot.key !== currentUid
+      snapshot.child('Users').forEach((dataSnapshot) => {
+        if (dataSnapshot.key !== currentUid &&
+          !snapshot.child('BlackList').hasChild(dataSnapshot.key)
           && dataSnapshot.child("Age").val() >= data.min
           && dataSnapshot.child("Age").val() <= data.max
           && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
@@ -725,13 +731,13 @@ exports.getUserList = functions.https.onCall((data, context) => {
           && !dataSnapshot.hasChild("off_list")
         ) {
           getUser2(data, parse_obj, dataSnapshot);
-
         }
       });
     }
     else {
-      snapshot.forEach((dataSnapshot) => {
-        if (dataSnapshot.key !== currentUid
+      snapshot.child('Users').forEach((dataSnapshot) => {
+        if (dataSnapshot.key !== currentUid &&
+          !snapshot.child('BlackList').hasChild(dataSnapshot.key)
           && dataSnapshot.child("sex").val() === data.sex
           && dataSnapshot.child("Age").val() >= data.min
           && dataSnapshot.child("Age").val() <= data.max
@@ -740,7 +746,6 @@ exports.getUserList = functions.https.onCall((data, context) => {
           && !dataSnapshot.hasChild("off_list")
         ) {
           getUser2(data, parse_obj, dataSnapshot);
-
         }
       });
     }
@@ -836,33 +841,32 @@ exports.resetLike2 = functions.pubsub.schedule('0 12 * * *')
 //NOTE report_listener
 
 exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpdate((Change, context) => {
-  var Count = 0;
   var userId = context.params.userId;
+  var Count = 0;
   const ref = db.ref("Users");
   ref.child(userId).child("Report").on("child_added", (snapshot) => {
     Count = Count + parseInt(snapshot.val());
-    console.log(Count);
     if (parseInt(snapshot.val()) >= 4) {
-      console.log('Successfully deleted user');
-      ref.child(userId).remove();
-      db.ref("BlackList").child(userId).set(true)
-      ref.on("child_added", (snapshot) => {
-        if (snapshot.child("connection").child("yep").hasChild(userId)) {
-          ref.child(snapshot.key).child("connection").child("yep").child(userId).remove();
-        }
-        if (snapshot.child("connection").child("nope").hasChild(userId)) {
-          ref.child(snapshot.key).child("connection").child("nope").child(userId).remove();
-        }
-        if (snapshot.child("connection").child("matches").hasChild(userId)) {
-          ref.child(snapshot.key).child("connection").child("matches").child(userId).remove();
-        }
-        if (snapshot.child("connection").child("chatna").hasChild(userId)) {
-          ref.child(snapshot.key).child("connection").child("chatna").child(userId).remove();
-        }
-        if (snapshot.child("see_profile").hasChild(userId)) {
-          ref.child(snapshot.key).child("see_profile").child(userId).remove();
-        }
-      });
+      db.ref("BlackList").child(userId).set(new Date.now())
+      //     console.log('Successfully deleted user');
+      //     ref.child(userId).remove();
+      //     ref.on("child_added", (snapshot) => {
+      //       if (snapshot.child("connection").child("yep").hasChild(userId)) {
+      //         ref.child(snapshot.key).child("connection").child("yep").child(userId).remove();
+      //       }
+      //       if (snapshot.child("connection").child("nope").hasChild(userId)) {
+      //         ref.child(snapshot.key).child("connection").child("nope").child(userId).remove();
+      //       }
+      //       if (snapshot.child("connection").child("matches").hasChild(userId)) {
+      //         ref.child(snapshot.key).child("connection").child("matches").child(userId).remove();
+      //       }
+      //       if (snapshot.child("connection").child("chatna").hasChild(userId)) {
+      //         ref.child(snapshot.key).child("connection").child("chatna").child(userId).remove();
+      //       }
+      //       if (snapshot.child("see_profile").hasChild(userId)) {
+      //         ref.child(snapshot.key).child("see_profile").child(userId).remove();
+      //       }
+      //     });
     }
   });
 });

@@ -51,6 +51,7 @@ const calculatePercent = (itemOpposite, currentItem) => {
       } else {
         number_result = Math.floor(result);
       }
+      // console.log('percent ===> ', `${number_result}`);
       return number_result
     } else {
       return number_result
