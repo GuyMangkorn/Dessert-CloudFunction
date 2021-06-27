@@ -3,7 +3,8 @@ const functions = require('firebase-functions');
 const axios = require('axios')
 const admin = require('firebase-admin');
 const { questionsFeedback, questionsRegister, questionStock } = require('./constant/questions');
-const { checkConnection, getDistanceOpposite, calculatePercent } = require('./utils/helper');
+const { checkConnection, getDistanceOpposite, calculatePercent, isEmpty } = require('./utils/helper');
+const { ruleBlacklist } = require('./utils/blacklist_rules');
 admin.initializeApp();
 
 
@@ -819,7 +820,6 @@ exports.resetLike1 = functions.pubsub.schedule('0 0 * * *')
       if (age !== calculate)
         db.ref('Users/' + snapshot.key + '/Age').set(calculate);
     });
-    console.log("ทำแล้ว");
     return false;
   });
 
@@ -832,45 +832,85 @@ exports.resetLike2 = functions.pubsub.schedule('0 12 * * *')
       db.ref('Users/' + snapshot.key + '/MaxLike').set(40);
       db.ref('Users/' + snapshot.key + '/MaxChat').set(20);
       db.ref('Users/' + snapshot.key + '/MaxAdmob').set(10);
-      console.log(String(snapshot.key));
     });
-    console.log("ทำแล้ว");
     return false;
   });
 
-//NOTE report_listener
+// SECTION reset blackList
 
-exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpdate((Change, context) => {
-  var userId = context.params.userId;
-  var Count = 0;
-  const ref = db.ref("Users");
-  ref.child(userId).child("Report").on("child_added", (snapshot) => {
-    Count = Count + parseInt(snapshot.val());
-    if (parseInt(snapshot.val()) >= 4) {
-      db.ref("BlackList").child(userId).set(new Date.now())
-      //     console.log('Successfully deleted user');
-      //     ref.child(userId).remove();
-      //     ref.on("child_added", (snapshot) => {
-      //       if (snapshot.child("connection").child("yep").hasChild(userId)) {
-      //         ref.child(snapshot.key).child("connection").child("yep").child(userId).remove();
-      //       }
-      //       if (snapshot.child("connection").child("nope").hasChild(userId)) {
-      //         ref.child(snapshot.key).child("connection").child("nope").child(userId).remove();
-      //       }
-      //       if (snapshot.child("connection").child("matches").hasChild(userId)) {
-      //         ref.child(snapshot.key).child("connection").child("matches").child(userId).remove();
-      //       }
-      //       if (snapshot.child("connection").child("chatna").hasChild(userId)) {
-      //         ref.child(snapshot.key).child("connection").child("chatna").child(userId).remove();
-      //       }
-      //       if (snapshot.child("see_profile").hasChild(userId)) {
-      //         ref.child(snapshot.key).child("see_profile").child(userId).remove();
-      //       }
-      //     });
+exports.resetBlackList = functions.pubsub.schedule('0 0 * * *')
+  .timeZone('Asia/Bangkok')
+  .onRun(async (context) => {
+    const refBlackList = db.ref('/BlackList');
+    const refReportStatus = db.ref('/BlackListStatus');
+    const resultBlackList = await refBlackList.once('value');
+    const resultStauts = await refReportStatus.once('value');
+    const dataStatus = resultStauts.val() || {}
+    const dataBlackList = resultBlackList.val() || {}
+    if (isEmpty(dataBlackList)) {
+      Object.keys(dataBlackList).forEach((key) => {
+        if (ruleBlacklist(parseFloat(dataBlackList[key]), isEmpty(dataStatus) ? dataStatus[key] : 1)) {
+          db.ref('/BlackList').child(key).remove();
+          db.ref(`/Users/${key}`).child('Report').remove();
+        }
+      })
     }
   });
-});
 
+// exports.testBlackListRule = functions.https.onRequest(async (req, res) => {
+//   const refBlackList = db.ref('/BlackList');
+//   const refReportStatus = db.ref('/BlackListStatus');
+//   const resultBlackList = await refBlackList.once('value');
+//   const resultStauts = await refReportStatus.once('value');
+//   const dataStatus = resultStauts.val() || {}
+//   const dataBlackList = resultBlackList.val() || {}
+//   if (isEmpty(dataBlackList)) {
+//     Object.keys(dataBlackList).forEach((key) => {
+//       console.log('keys', key);
+//       if (ruleBlacklist(parseFloat(dataBlackList[key]), isEmpty(dataStatus) ? dataStatus[key] : 1)) {
+//         db.ref('/BlackList').child(key).remove();
+//         db.ref(`/Users/${key}`).child('Report').remove();
+//       }
+//     })
+//   }
+//   res.status(200).send({})
+// })
+
+// !SECTION
+
+//NOTE report_listener
+
+exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpdate(async (change, context) => {
+  var userId = context.params.userId;
+  const refReport = db.ref(`/Users/${userId}/Report`);
+  const refReportStatus = db.ref('/BlackListStatus')
+  const refBlackList = db.ref('/BlackList')
+  const resultStauts = await refReportStatus.once('value')
+  const result = await refReport.once('value')
+  const resultBlackList = await refBlackList.once('value');
+  const dataStatus = resultStauts.val() || {}
+  const dataBlackList = resultBlackList.val() || {}
+  const data = result.val() || {}
+  const currentData = new Date().getTime()
+  if (!isEmpty(dataStatus) || (isEmpty(dataStatus) && !Object.prototype.hasOwnProperty.call(dataBlackList, userId))) {
+    if (isEmpty(dataStatus) && Object.prototype.hasOwnProperty.call(dataStatus, userId)) {
+      const counter = parseInt(dataStatus[userId]) + 1
+      Object.values(data).forEach((item) => {
+        if (parseInt(item) > 4) {
+          db.ref("BlackList").child(userId).set(currentData)
+          db.ref('BlackListStatus').child(userId).set(counter)
+        }
+      })
+    } else {
+      Object.values(data).forEach((item) => {
+        if (parseInt(item) > 4) {
+          db.ref("BlackList").child(userId).set(currentData)
+          db.ref('BlackListStatus').child(userId).set(1)
+        }
+      })
+    }
+  }
+});
 // !SECTION
 
 
