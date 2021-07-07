@@ -10,10 +10,13 @@ const checkConnection = (item, currentUid) => {
   }
 }
 
+// NOTE Calculate percent
+
 const calculatePercent = (itemOpposite, currentItem) => {
   let listQAuid = [];
   let listQAother = [];
-  let reserve = []
+  let reserve = [];
+  let resultQA = [];
   let percentUid;
   let percentOther;
   let result = 0;
@@ -21,7 +24,7 @@ const calculatePercent = (itemOpposite, currentItem) => {
   let sumOter = 0;
   let maxUID = 0;
   let maxOtherID = 0;
-  let number_result = 0
+  let percent = 0
   if (Object.prototype.hasOwnProperty.call(currentItem, 'Questions')) {
     reserve = Object.values(currentItem['Questions']).map((item) => item)
     if (Object.prototype.hasOwnProperty.call(itemOpposite, 'Questions')) {
@@ -29,6 +32,7 @@ const calculatePercent = (itemOpposite, currentItem) => {
         if (isEmpty(itemOpposite["Questions"][item.id])) {
           listQAuid.push(item)
           listQAother.push(itemOpposite["Questions"][item.id])
+          resultQA.push({ 'question': item['id'], 'isEqual': false })
         }
       })
       // console.log('==============================================================================');
@@ -37,6 +41,7 @@ const calculatePercent = (itemOpposite, currentItem) => {
         maxOtherID += listQAother[index]['weight'];
         maxUID += itemUser['weight'];
         if (listQAother[index]['question'] === itemUser['question']) {
+          resultQA[index]["isEqual"] = true
           // console.log('User ===> ', `question: ${itemUser.question} , weight: ${itemUser.weight}`, ', Opposite ===>', `question: ${listQAother[index].question} , weigth: ${listQAother[index].weight}`);
           sumUID += listQAother[index]['weight'];
           sumOter += itemUser['weight'];
@@ -49,16 +54,18 @@ const calculatePercent = (itemOpposite, currentItem) => {
       if (isNaN(result)) {
         result = 0;
       } else {
-        number_result = Math.floor(result);
+        percent = Math.floor(result);
       }
       // console.log('percent ===> ', `${number_result}`);
-      return number_result
+      return { percent, resultQA }
     } else {
-      return number_result
+      return { percent, resultQA }
     }
   }
-  return number_result
+  return { percent, resultQA }
 }
+
+// NOTE get distance
 
 const getDistanceOpposite = (x_user, y_user, x_opp, y_opp) => {
   let lonlon = (Math.PI / 180) * (y_opp - y_user);
@@ -80,5 +87,26 @@ const isEmpty = (obj) => {
   return bool > 0 ? true : false
 }
 
+// NOTE get compare question
 
-module.exports = { isEmpty, checkConnection, getDistanceOpposite, calculatePercent }
+const compareQuestion = (userData, allQuestion) => {
+  let result = []
+  const preUserData = [...userData];
+  if (preUserData.length === 2) {
+    const user1 = preUserData[0]["Questions"]
+    const user2 = preUserData[1]["Questions"]
+    Object.values(user1).forEach((item) => {
+      if (isEmpty(user2[item.id]) && user2[item.id]['question'] === item['question']) {
+        result.push({ 'question': allQuestion[item.id]["question"], 'status': true })
+        // console.log(`match ==> user1 : ${item['question']} , user2 : ${user2[item.id]['question']}`);
+      } else {
+        result.push({ 'question': allQuestion[item.id]["question"], 'status': false })
+      }
+    })
+    return result
+  }
+  return result
+}
+
+
+module.exports = { isEmpty, checkConnection, getDistanceOpposite, calculatePercent, compareQuestion }

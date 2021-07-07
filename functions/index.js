@@ -3,7 +3,7 @@ const functions = require('firebase-functions');
 const axios = require('axios')
 const admin = require('firebase-admin');
 const { questionsFeedback, questionsRegister, questionStock } = require('./constant/questions');
-const { checkConnection, getDistanceOpposite, calculatePercent, isEmpty } = require('./utils/helper');
+const { checkConnection, getDistanceOpposite, calculatePercent, isEmpty, compareQuestion } = require('./utils/helper');
 const { ruleBlacklist } = require('./utils/blacklist_rules');
 admin.initializeApp();
 
@@ -185,7 +185,7 @@ exports.getPercentageMatching = functions.https.onCall((data, context) => {
   });
 });
 
-// NOTE addQuestions
+// NOTE getQuestions
 
 exports.addQuestions = functions.https.onCall((data, context) => {
   var listQuestion = [];
@@ -446,21 +446,6 @@ exports.sendnotificationMatch = functions.database.ref('/Users/{userId}/connecti
   });
 });
 
-// NOTE on Chat add
-exports.onChatAdded = functions.database.ref('/Chat/{chatId}/{childId}/text').onCreate((snap, context) => {
-  const childId = context.params.childId;
-  const chatId = context.params.chatId;
-  const message = snap.val();
-  const nounWords = ['ไอ้', 'อี', 'ไอ']
-  const subNounWords = ['ดอก', 'โง่', 'กาก', 'ควาย']
-  const val = message.match(/เหี้ย|สัส|ควย|หี|fuck|idiot|damn|ass|shit/g)
-  let newMessage
-  PROFANITY = new RegExp("(" + val.join("|") + ")", "gi");
-  newMessage = message.replace(PROFANITY, '***')
-  db.ref(`/Chat/${chatId}/${childId}/text`).set(newMessage)
-  return newMessage
-})
-
 // !SECTION
 
 
@@ -500,76 +485,40 @@ function calculateTime(time) {
 }
 
 
-
-// NOTE getUser2
-
-function getUser2(data, parse_obj, dataSnapshot) {
-  var lat1 = data.x_user;
-  var lat2 = dataSnapshot.child("Location").child("X").val();
-  var lon1 = data.y_user;
-  var lon2 = dataSnapshot.child("Location").child("Y").val();
-  var lonlon = (Math.PI / 180) * (lon2 - lon1);
-  var latlat = (Math.PI / 180) * (lat2 - lat1);
-  var lat1r = (Math.PI / 180) * (lat1);
-  var lat2r = (Math.PI / 180) * (lat2);
-  var R = 6371.0;
-  var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var distance_other = R * c;
-  if (distance_other < data.distance) {
-    var parse_obj2 = {};
-    parse_obj2 = dataSnapshot.val();
-    if (dataSnapshot.hasChild("date")) {
-      var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
-      var t = str.substring(0, 1);
-      var s = str.substring(1);
-      if (t === "d") {
-        if (s <= 14) {
-          parse_obj2.typeTime = t;
-          parse_obj2.time = s;
-          parse_obj2.distance_other = distance_other;
-          parse_obj2.key = dataSnapshot.key;
-          parse_obj.push(parse_obj2)
-        }
-      }
-      else {
-        parse_obj2.typeTime = t;
-        parse_obj2.time = s;
-        parse_obj2.distance_other = distance_other;
-        parse_obj2.key = dataSnapshot.key;
-        parse_obj.push(parse_obj2)
-      }
-
-    }
-
-  }
-}
-
 // ANCHOR getPercnetforopposite
 
-const getPercentList = (data, dataUser, currentItem) => {
+const getPercentList = (data, dataUser, currentItem, currentUid) => {
   let result = dataUser.map((item) => {
     const distance_other = getDistanceOpposite(data.x_user, data.y_user, item["Location"]["X"], item["Location"]["Y"])
     const str = calculateTime(parseFloat(item["date"]));
     const t = str.substring(0, 1);
     const s = str.substring(1);
-    const percent = calculatePercent(item, currentItem)
+    const { percent, resultQA } = calculatePercent(item, currentItem)
     if (t === "d" && s <= 14) {
+      if (isEmpty(item["star_s"]) && Object.prototype.hasOwnProperty.call(item["star_s"], currentUid)) {
+        item.starS = 1
+      } else item.starS = 0
       item.percent = percent
       item.typeTime = t;
       item.distance_other = distance_other
       item.time = s;
+      // item.equalQuestion = resultQA
     }
     else {
+      if (isEmpty(item["star_s"]) && Object.prototype.hasOwnProperty.call(item["star_s"], currentUid)) {
+        item.starS = 1
+      } else item.starS = 0
       item.percent = percent
       item.typeTime = t;
       item.time = s;
       item.distance_other = distance_other
+      // item.equalQuestion = resultQA
     }
     return item
   })
   return result
 }
+
 
 // NOTE getUserCard
 
@@ -583,6 +532,7 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
     mainData[key].key = key
     return mainData[key]
   })
+  // TODO don't forgot to change uid
   const currentUid = context.auth.uid;
   // const currentUid = data.uid
   const currentItem = rearrageData.find((item) => item.key === currentUid)
@@ -595,7 +545,7 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
         checkConnection(item, currentUid) &&
         !Object.prototype.hasOwnProperty.call(item, 'off_card')
     })
-    parse_obj3 = getPercentList(data, filterList, currentItem)
+    parse_obj3 = getPercentList(data, filterList, currentItem, currentUid)
   } else {
     const filterList = rearrageData.filter((item) => {
       return item.key !== currentUid &&
@@ -606,15 +556,57 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
         item.sex === data.sex &&
         !Object.prototype.hasOwnProperty.call(item, 'off_card')
     })
-    parse_obj3 = getPercentList(data, filterList, currentItem)
+    parse_obj3 = getPercentList(data, filterList, currentItem, currentUid)
   }
   parse_obj3.sort((a, b) => {
-    if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
+    // if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
+    if (a.starS !== b.starS) return (a.starS < b.starS) ? 1 : -1;
     return (a.percent > b.percent) ? -1 : 1;
   });
   let o = parse_obj3.slice(data.prelimit, data.limit);
   return { o };
 });
+
+
+// NOTE get user equals
+
+exports.getListQuestionEqual = functions.https.onCall(async (data, context) => {
+  // TODO don't forgot to change uid
+  const currentUid = context.auth.uid;
+  // const currentUid = data.uid
+  const questionRef = await db.ref(`Question/${data.locale}`).once("value")
+  const questionRegiserRef = await db.ref(`QuestionRegister/${data.locale}`).once("value")
+  const userRef = await db.ref("Users").once("value")
+  const [valUsers, valQuestion, valQuestionRegister] = await Promise.all([userRef.val(), questionRef.val(), questionRegiserRef.val()])
+  const allQuestion = Object.assign(valQuestion, valQuestionRegister)
+  const resultUserList = Object.keys(valUsers).filter((key) => (key === currentUid || key === data.oppositeUid))
+  const newList = resultUserList.map((key) => {
+    valUsers[key].key = key
+    return valUsers[key]
+  })
+  console.log(newList);
+  const result = compareQuestion(newList, allQuestion)
+  return { result }
+})
+
+// NOTE get percent 2 users
+
+exports.getPercentTwoUsers = functions.https.onCall(async (data, context) => {
+  // TODO don't forgot to change uid
+  const currentUid = context.auth.uid;
+  // const currentUid = data.uid;
+  const userRef = await db.ref("Users").once("value")
+  const userData = userRef.val();
+  let result
+  if (isEmpty(userData[data.oppositeUid]) && isEmpty(userData[currentUid])) {
+    const { percent, resultQA } = calculatePercent(userData[data.oppositeUid], userData[currentUid])
+    result = percent
+  } else {
+    result = 0
+  }
+  return { result }
+})
+
 
 
 // NOTE getUser
@@ -714,6 +706,53 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
 //   });
 // });
 
+
+// NOTE getUser2
+
+function getUser2(data, parse_obj, dataSnapshot, userSnapshot) {
+  var lat1 = data.x_user;
+  var lat2 = dataSnapshot.child("Location").child("X").val();
+  var lon1 = data.y_user;
+  var lon2 = dataSnapshot.child("Location").child("Y").val();
+  var lonlon = (Math.PI / 180) * (lon2 - lon1);
+  var latlat = (Math.PI / 180) * (lat2 - lat1);
+  var lat1r = (Math.PI / 180) * (lat1);
+  var lat2r = (Math.PI / 180) * (lat2);
+  var R = 6371.0;
+  var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var distance_other = R * c;
+  if (distance_other < data.distance) {
+    var parse_obj2 = {};
+    parse_obj2 = dataSnapshot.val();
+    if (dataSnapshot.hasChild("date")) {
+      var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
+      var t = str.substring(0, 1);
+      var s = str.substring(1);
+      if (t === "d") {
+        if (s <= 14) {
+          const { percent, resultQA } = calculatePercent(parse_obj2, userSnapshot)
+          parse_obj2.percent = percent;
+          parse_obj2.typeTime = t;
+          parse_obj2.time = s;
+          parse_obj2.distance_other = distance_other;
+          parse_obj2.key = dataSnapshot.key;
+          parse_obj.push(parse_obj2)
+        }
+      }
+      else {
+        const { percent, resultQA } = calculatePercent(parse_obj2, userSnapshot)
+        parse_obj2.percent = percent;
+        parse_obj2.typeTime = t;
+        parse_obj2.time = s;
+        parse_obj2.distance_other = distance_other;
+        parse_obj2.key = dataSnapshot.key;
+        parse_obj.push(parse_obj2)
+      }
+    }
+  }
+}
+
 //NOTE getUserList
 
 exports.getUserList = functions.https.onCall((data, context) => {
@@ -721,6 +760,7 @@ exports.getUserList = functions.https.onCall((data, context) => {
   return db.ref("/").once("value", async (snapshot) => {
     var currentUid = context.auth.uid;
     // const currentUid = data.uid
+    const userData = snapshot.child(`Users/${currentUid}`).val();
     if (data.sex === "All") {
       snapshot.child('Users').forEach((dataSnapshot) => {
         if (dataSnapshot.key !== currentUid &&
@@ -731,7 +771,7 @@ exports.getUserList = functions.https.onCall((data, context) => {
           && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
           && !dataSnapshot.hasChild("off_list")
         ) {
-          getUser2(data, parse_obj, dataSnapshot);
+          getUser2(data, parse_obj, dataSnapshot, userData);
         }
       });
     }
@@ -746,7 +786,7 @@ exports.getUserList = functions.https.onCall((data, context) => {
           && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
           && !dataSnapshot.hasChild("off_list")
         ) {
-          getUser2(data, parse_obj, dataSnapshot);
+          getUser2(data, parse_obj, dataSnapshot, userData);
         }
       });
     }
@@ -875,6 +915,8 @@ exports.resetBlackList = functions.pubsub.schedule('0 0 * * *')
 //   }
 //   res.status(200).send({})
 // })
+
+// NOTE add status to questions
 
 // !SECTION
 
