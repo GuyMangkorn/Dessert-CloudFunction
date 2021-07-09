@@ -865,16 +865,16 @@ exports.resetLike1 = functions.pubsub.schedule('0 0 * * *')
 
 //NOTE resetLike2
 
-exports.resetLike2 = functions.pubsub.schedule('0 12 * * *')
-  .timeZone('Asia/Bangkok')
-  .onRun((context) => {
-    db.ref("Users").on("child_added", (snapshot) => {
-      db.ref('Users/' + snapshot.key + '/MaxLike').set(40);
-      db.ref('Users/' + snapshot.key + '/MaxChat').set(20);
-      db.ref('Users/' + snapshot.key + '/MaxAdmob').set(10);
-    });
-    return false;
-  });
+// exports.resetLike2 = functions.pubsub.schedule('0 12 * * *')
+//   .timeZone('Asia/Bangkok')
+//   .onRun((context) => {
+//     db.ref("Users").on("child_added", (snapshot) => {
+//       db.ref('Users/' + snapshot.key + '/MaxLike').set(40);
+//       db.ref('Users/' + snapshot.key + '/MaxChat').set(20);
+//       db.ref('Users/' + snapshot.key + '/MaxAdmob').set(10);
+//     });
+//     return false;
+//   });
 
 // SECTION reset blackList
 
