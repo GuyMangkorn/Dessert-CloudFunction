@@ -30,7 +30,7 @@ exports.closeAccount = functions.https.onCall(async (data, context) => {
         ref.child(key).child("connection").child("nope").child(userId).remove();
       }
       if (snapChild.child("connection").child("matches").hasChild(userId)) {
-        ref.child(key).child("connection").child("nope").child(userId).remove();
+        ref.child(key).child("connection").child("matches").child(userId).remove();
       }
       if (snapChild.child("connection").child("chatna").hasChild(userId)) {
         ref.child(key).child("connection").child("chatna").child(userId).remove();
@@ -220,6 +220,14 @@ exports.addQuestions = functions.https.onCall((data, context) => {
     }
   });
 });
+
+// NOTE GET 10 questions
+
+exports.getStackOfQuestion = functions.https.onCall(async (data, context) => {
+  // const currentUid = context.auth.uid;
+  const currentUid = data.uid;
+
+})
 
 // NOTE addRandomUsers
 
@@ -568,6 +576,27 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
 });
 
 
+// NOTE check out of questions
+
+exports.outOfQuestion = functions.https.onCall(async (data, context) => {
+  let result = false
+  // TODO don't forgot to change uid
+  const currentUid = context.auth.uid;
+  // const currentUid = data.uid
+  const userRef = await db.ref(`Users/${currentUid}/Questions`).once("value")
+  const questionRef = await db.ref(`Question/th`).once("value")
+  const registerRef = await db.ref(`QuestionRegister/th`).once("value")
+  const userData = userRef.val();
+  const resigerData = registerRef.val();
+  const questionData = questionRef.val();
+  result = Object.keys(questionData).reduce((acc, data) => {
+    return Object.keys(userData).includes(data) && acc
+  }, true)
+
+  return { result }
+})
+
+
 // NOTE get user equals
 
 exports.getListQuestionEqual = functions.https.onCall(async (data, context) => {
@@ -584,7 +613,6 @@ exports.getListQuestionEqual = functions.https.onCall(async (data, context) => {
     valUsers[key].key = key
     return valUsers[key]
   })
-  console.log(newList);
   const result = compareQuestion(newList, allQuestion)
   return { result }
 })
@@ -941,6 +969,7 @@ exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpda
         if (parseInt(item) > 4) {
           db.ref("BlackList").child(userId).set(currentData)
           db.ref('BlackListStatus').child(userId).set(counter)
+          removeFormOther(userId)
         }
       })
     } else {
@@ -948,11 +977,43 @@ exports.report_listener = functions.database.ref('Users/{userId}/Report').onUpda
         if (parseInt(item) > 4) {
           db.ref("BlackList").child(userId).set(currentData)
           db.ref('BlackListStatus').child(userId).set(1)
+          removeFormOther(userId)
         }
       })
     }
   }
 });
+
+const removeFormOther = async (userId) => {
+  const result = await admin.database().ref('/Users').once('value').then(snap => {
+    snap.forEach((snapChild) => {
+      const key = snapChild.key
+      if (snapChild.child("connection").child("yep").hasChild(userId)) {
+        ref.child(key).child("connection").child("yep").child(userId).remove();
+      }
+      if (snapChild.child("connection").child("nope").hasChild(userId)) {
+        ref.child(key).child("connection").child("nope").child(userId).remove();
+      }
+      if (snapChild.child("connection").child("matches").hasChild(userId)) {
+        ref.child(key).child("connection").child("matches").child(userId).remove();
+      }
+      if (snapChild.child("connection").child("chatna").hasChild(userId)) {
+        ref.child(key).child("connection").child("chatna").child(userId).remove();
+      }
+      if (snapChild.child("see_profile").hasChild(userId)) {
+        ref.child(key).child("see_profile").child(userId).remove();
+      }
+    })
+    return { message: 'Success' }
+  }).catch(e => {
+    return {
+      error: e
+    }
+  })
+  return {
+    result
+  }
+}
 // !SECTION
 
 
