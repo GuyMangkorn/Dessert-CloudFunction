@@ -10,6 +10,12 @@ const checkConnection = (item, currentUid) => {
   }
 }
 
+
+const objSize = (obj) => {
+  const reserve = obj || {}
+  return Object.keys(reserve).length
+}
+
 // NOTE Calculate percent
 
 const calculatePercent = (itemOpposite, currentItem) => {
@@ -93,8 +99,8 @@ const compareQuestion = (userData, allQuestion) => {
   let result = []
   const preUserData = [...userData];
   if (preUserData.length === 2) {
-    const user1 = preUserData[0]["Questions"]
-    const user2 = preUserData[1]["Questions"]
+    const user1 = objSize(preUserData[0]["Questions"]) > objSize(preUserData[1]["Questions"]) ? preUserData[1]["Questions"] : preUserData[0]["Questions"]
+    const user2 = objSize(preUserData[0]["Questions"]) > objSize(preUserData[1]["Questions"]) ? preUserData[0]["Questions"] : preUserData[1]["Questions"]
     Object.values(user1).forEach((item) => {
       if (isEmpty(user2[item.id]) && user2[item.id]['question'] === item['question']) {
         result.push({ 'question': allQuestion[item.id]["question"], 'status': true })

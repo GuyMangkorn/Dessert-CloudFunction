@@ -221,14 +221,6 @@ exports.addQuestions = functions.https.onCall((data, context) => {
   });
 });
 
-// NOTE GET 10 questions
-
-exports.getStackOfQuestion = functions.https.onCall(async (data, context) => {
-  // const currentUid = context.auth.uid;
-  const currentUid = data.uid;
-
-})
-
 // NOTE addRandomUsers
 
 
@@ -550,6 +542,7 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
         !Object.prototype.hasOwnProperty.call(blacklistData, item.key) &&
         item.Age >= data.min &&
         item.Age <= data.max &&
+        (isEmpty(item["ProfileImage"]) && Object.prototype.hasOwnProperty.call(item["ProfileImage"], "profileImageUrl0")) &&
         checkConnection(item, currentUid) &&
         !Object.prototype.hasOwnProperty.call(item, 'off_card')
     })
@@ -560,6 +553,7 @@ exports.getUserCard = functions.https.onCall(async (data, context) => {
         !Object.prototype.hasOwnProperty.call(blacklistData, item.key) &&
         item.Age >= data.min &&
         item.Age <= data.max &&
+        (isEmpty(item["ProfileImage"]) && Object.prototype.hasOwnProperty.call(item["ProfileImage"], "profileImageUrl0")) &&
         checkConnection(item, currentUid) &&
         item.sex === data.sex &&
         !Object.prototype.hasOwnProperty.call(item, 'off_card')
