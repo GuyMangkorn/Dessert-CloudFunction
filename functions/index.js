@@ -66,6 +66,43 @@ exports.adminRole = functions.https.onCall((data, context) => {
   });
 });
 
+exports.statusTrueToQuestion = functions.https.onRequest(async (req, res) => {
+  const question = await db.ref('/QuestionRegister/th').once('value');
+  const questionData = question.val();
+  Object.keys(questionData).forEach((e) => {
+    db.ref('/QuestionRegister/th').child(e).child('status').set(true);
+    db.ref('/QuestionRegister/en').child(e).child('status').set(true);
+  })
+  return res.status(200).send({ data: 'Success' });
+})
+
+exports.addMockQuestion = functions.https.onCall(async (data, context) => {
+  const questionFB = await db.ref('/QuestionFeedback/th').once('value');
+  const statusFB = await db.ref('/FeedbackStatus').once('value');
+  const statusDBData = statusFB.val();
+  const questionFBData = questionFB.val();
+  const listQa = [...data.question];
+  Object.keys(questionFBData).forEach((e, index) => {
+    const baseVal = statusDBData[e][`question${listQa[index]}`]
+    db.ref('/FeedbackStatus/').child(e).child(`question${listQa[index]}`).set(baseVal + 1);
+  })
+  return data
+});
+
+exports.removeAdminRole = functions.https.onCall((data, context) => {
+  return admin.auth().getUserByEmail(data.email).then(user => {
+    return admin.auth().setCustomUserClaims(user.uid, {
+      admin: false
+    })
+  }).then(() => {
+    return {
+      message: `Success! ${data.email} has been remove from admin`
+    }
+  }).catch(err => {
+    return err;
+  })
+})
+
 
 // NOTE resetUsers
 
@@ -380,8 +417,6 @@ exports.sendnotificationChat = functions.database.ref('/Chat/{chatId}/{messageId
     var ref2 = db.ref('/Users/' + createBy + '/connection/matches');
 
     ref2.orderByChild('ChatId').equalTo(receiverId).on("child_added", (snapshot, prevChildKey) => {
-
-      //console.log("MatchId_Fetch : ",snapshot.key);
       var ref3 = db.ref('/Users/' + snapshot.key);
       ref3.once("value", (snapshot) => {
         var token = snapshot.child('token').val();
@@ -630,105 +665,6 @@ exports.getPercentTwoUsers = functions.https.onCall(async (data, context) => {
 })
 
 
-
-// NOTE getUser
-
-// function getUser(data, parse_obj3, dataSnapshot, currentUid) {
-//   var lat1 = data.x_user;
-//   var lat2 = dataSnapshot.child("Location").child("X").val();
-//   var lon1 = data.y_user;
-//   var lon2 = dataSnapshot.child("Location").child("Y").val();
-//   var lonlon = (Math.PI / 180) * (lon2 - lon1);
-//   var latlat = (Math.PI / 180) * (lat2 - lat1);
-//   var lat1r = (Math.PI / 180) * (lat1);
-//   var lat2r = (Math.PI / 180) * (lat2);
-//   var R = 6371.0;
-//   var a = Math.sin(latlat / 2) * Math.sin(latlat / 2) + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(lonlon / 2) * Math.sin(lonlon / 2);
-//   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//   var distance_other = R * c;
-//   if (distance_other < data.distance) {
-//     var parse_obj2 = {};
-//     parse_obj2 = dataSnapshot.val();
-//     var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
-//     var t = str.substring(0, 1);
-//     var s = str.substring(1);
-//     if (t === "d") {
-//       if (s <= 14) {
-//         if (dataSnapshot.child("star_s").hasChild(currentUid)) {
-//           parse_obj2.starS = 1;
-//           console.log(dataSnapshot.key);
-//         } else parse_obj2.starS = 0;
-
-//         parse_obj2.typeTime = t;
-//         parse_obj2.time = s;
-//         parse_obj2.distance_other = distance_other;
-//         parse_obj2.key = dataSnapshot.key;
-//         parse_obj3.push(parse_obj2)
-//       }
-//     }
-//     else {
-//       if (dataSnapshot.child("star_s").hasChild(currentUid)) {
-//         parse_obj2.starS = 1;
-//         console.log(dataSnapshot.key);
-//       } else parse_obj2.starS = 0;
-//       parse_obj2.typeTime = t;
-//       parse_obj2.time = s;
-//       parse_obj2.distance_other = distance_other;
-//       parse_obj2.key = dataSnapshot.key;
-//       parse_obj3.push(parse_obj2)
-//     }
-
-//   }
-// }
-
-
-// exports.getUserCard = functions.https.onCall((data, context) => {
-//   var parse_obj3 = [];
-//   return db.ref("Users").once("value", (snapshot) => {
-//     var currentUid = context.auth.uid;
-//     if (data.sex === "All") {
-//       snapshot.forEach((dataSnapshot) => {
-//         if (dataSnapshot.key !== currentUid
-//           && dataSnapshot.child("Age").val() >= data.min
-//           && dataSnapshot.child("Age").val() <= data.max
-//           && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
-//           && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
-//           && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
-//           && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
-//           && !dataSnapshot.hasChild("off_card")
-//         ) {
-//           getUser(data, parse_obj3, dataSnapshot, currentUid);
-//         }
-//       });
-//     }
-//     else {
-//       snapshot.forEach((dataSnapshot) => {
-//         if (dataSnapshot.key !== currentUid
-//           && dataSnapshot.child("sex").val() === data.sex
-//           && dataSnapshot.child("Age").val() >= data.min
-//           && dataSnapshot.child("Age").val() <= data.max
-//           && !dataSnapshot.hasChild("off_card")
-//           && !dataSnapshot.child("connection").child("matches").hasChild(currentUid)
-//           && !dataSnapshot.child("connection").child("yep").hasChild(currentUid)
-//           && !dataSnapshot.child("connection").child("nope").hasChild(currentUid)
-//           && dataSnapshot.child("ProfileImage").hasChild("profileImageUrl0")
-//         ) {
-//           getUser(data, parse_obj3, dataSnapshot, currentUid);
-//         }
-//       });
-//     }
-//   }).then(() => {
-//     parse_obj3.sort((a, b) => {
-//       if (a.starS !== b.starS) return (a.starS < b.starS) ? 1 : -1;
-//       if (a.Vip !== b.Vip) return (a.Vip < b.Vip) ? 1 : -1;
-//       return (a.distance_other < b.distance_other) ? -1 : 1;
-//     });
-//     var o = parse_obj3.slice(data.prelimit, data.limit);
-//     return { o };
-//   });
-// });
-
-
 // NOTE getUser2
 
 function getUser2(data, parse_obj, dataSnapshot, userSnapshot) {
@@ -747,7 +683,7 @@ function getUser2(data, parse_obj, dataSnapshot, userSnapshot) {
   if (distance_other < data.distance) {
     var parse_obj2 = {};
     parse_obj2 = dataSnapshot.val();
-    if (dataSnapshot.hasChild("date")) {
+    if (dataSnapshot.hasChild("date") || dataSnapshot.child("status").val() === 1) {
       var str = calculateTime(parseFloat(dataSnapshot.child("date").val()));
       var t = str.substring(0, 1);
       var s = str.substring(1);
@@ -823,48 +759,6 @@ exports.getUserList = functions.https.onCall((data, context) => {
   });
 });
 
-//NOTE addUser
-
-exports.addUser = functions.https.onRequest((request, response) => {
-  var i
-  for (i = 0; i <= 200; i++) {
-    var id = "test" + i
-    db.ref("Users/" + id + "/name").set("test" + i);
-    db.ref("Users/" + id + "/Vip").set(0);
-    db.ref('Users/' + id + '/Age').set(Math.floor(Math.random() * 70) + 18);
-    db.ref('Users/' + id + '/Distance').set("Untitled");
-    db.ref('Users/' + id + '/OppositeUserAgeMax').set(70);
-    db.ref('Users/' + id + '/OppositeUserAgeMin').set(18);
-    db.ref('Users/' + id + '/OppositeUserSex').set("All");
-    switch (Math.floor(Math.random() * 2)) {
-      case 0: db.ref('Users/' + id + '/sex').set("Male");
-        break;
-      case 1: db.ref('Users/' + id + '/sex').set("Female");
-        break;
-    }
-    switch (Math.floor(Math.random() * 3)) {
-      case 0: db.ref('Users/' + id + '/ProfileImage/profileImageUrl0').set("https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FhloAcfQbgyND8v83ySCln2Kh4gB3%2FprofileImageUrl0?alt=media&token=fb2a0ddc-e936-462d-9d9f-1c65b2cfeca3");
-        break;
-      case 1: db.ref('Users/' + id + '/ProfileImage/profileImageUrl0').set("https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FhloAcfQbgyND8v83ySCln2Kh4gB3%2FprofileImageUrl1?alt=media&token=d8190401-9133-4c06-b3aa-a3f05628c5ca");
-        break;
-      case 2: db.ref('Users/' + id + '/ProfileImage/profileImageUrl0').set("https://firebasestorage.googleapis.com/v0/b/tinder-3ac12.appspot.com/o/profileImages%2FhloAcfQbgyND8v83ySCln2Kh4gB3%2FprofileImageUrl2?alt=media&token=77060af2-5c3a-4aa4-a21b-7a10837618d4");
-        break;
-
-    }
-
-    db.ref('Users/' + id + '/date').set(1603442692408);
-    db.ref('Users/' + id + '/status').set(0);
-    db.ref('Users/' + id + '/Location/X').set(13.8103942);
-    db.ref('Users/' + id + '/Location/Y').set(100.692658);
-    db.ref('Users/' + id + '/MaxLike').set(40);
-    db.ref('Users/' + id + '/MaxChat').set(20);
-    db.ref('Users/' + id + '/MaxAdmob').set(10);
-    db.ref('Users/' + id + '/MaxStar').set(3);
-    db.ref('Users/' + id + '/birth').set(906854400000);
-  }
-
-});
-
 //NOTE resetLike1
 
 exports.resetLike1 = functions.pubsub.schedule('0 0 * * *')
@@ -918,27 +812,6 @@ exports.resetBlackList = functions.pubsub.schedule('0 0 * * *')
       })
     }
   });
-
-// exports.testBlackListRule = functions.https.onRequest(async (req, res) => {
-//   const refBlackList = db.ref('/BlackList');
-//   const refReportStatus = db.ref('/BlackListStatus');
-//   const resultBlackList = await refBlackList.once('value');
-//   const resultStauts = await refReportStatus.once('value');
-//   const dataStatus = resultStauts.val() || {}
-//   const dataBlackList = resultBlackList.val() || {}
-//   if (isEmpty(dataBlackList)) {
-//     Object.keys(dataBlackList).forEach((key) => {
-//       console.log('keys', key);
-//       if (ruleBlacklist(parseFloat(dataBlackList[key]), isEmpty(dataStatus) ? dataStatus[key] : 1)) {
-//         db.ref('/BlackList').child(key).remove();
-//         db.ref(`/Users/${key}`).child('Report').remove();
-//       }
-//     })
-//   }
-//   res.status(200).send({})
-// })
-
-// NOTE add status to questions
 
 // !SECTION
 

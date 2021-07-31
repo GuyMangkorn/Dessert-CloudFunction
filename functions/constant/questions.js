@@ -26,9 +26,50 @@ const questionsFeedback = [
 
 const questionsRegister = [
   new Question(
+    'คุณชอบที่จะเถียงหรือไม่?', "Do you like to argue?",
+    { c1: 'ใช่', c2: 'ไม่ใช่' },
+    { c1: 'Yes', c2: 'No' }),
+  new Question(
+    'คุณคิดว่าเงินซื้อความสุขได้หรือไม่?', "Do you think money can buy happiness?",
+    { c1: 'ได้', c2: 'ไม่ได้' },
+    { c1: 'Yes', c2: 'No' }),
+  new Question(
+    'คุณระมัดระวังการใช้เงิน?', "Are you careful with your money?",
+    { c1: 'ใช่', c2: 'ไม่ใช่' },
+    { c1: 'Yes', c2: 'No' }),
+  new Question(
+    'คุณชอบแมวหรือไม่?', "Do you like cats?",
+    { c1: 'ชอบ', c2: 'ไม่ชอบ' },
+    { c1: 'Yes,absolutely', c2: 'No' }),
+  new Question(
+    'คุณชอบหมาหรือไม่?', "Do you like dogs?",
+    { c1: 'ชอบ', c2: 'ไม่ชอบ' },
+    { c1: 'Yes,absolutely', c2: 'No' }),
+  new Question(
+    'คุณคิดอยากจะมีความสัมพันธ์แบบเปิดหรือไม่?', "Would you consider having an open relationship?",
+    { c1: 'อยาก', c2: 'ไม่อยาก' },
+    { c1: 'Yes', c2: 'No' }),
+  new Question(
+    'คุณเลือกจะออกเดทกับคนสูบบุหรี่รึไม่?', 'Would you go out with a smoker?',
+    { c1: 'ใช่', c2: 'ไม่ใช่' },
+    { c1: 'Yes', c2: 'No' }),
+  new Question(
+    'คุณเชื่อไหมว่าผู้ชายต้องเป็นหัวหน้าครอบครัว?', "Do you believe that men should be the heads of their households?",
+    { c1: 'เชื่อว่าอย่างนั้น', c2: 'ไม่เชื่อ' },
+    { c1: 'Yes', c2: 'No' }),
+  new Question(
     'คุณอยากจะเดทกับคนที่มีเชื้อชาติเหมือนคุณเองหรือไม่?', 'Would you like to date someone of your own race?',
     { c1: 'ใช่', c2: 'ไม่ใช่' },
     { c1: 'Yes', c2: 'No' }),
+  new Question(
+    'คุณสามารถเดทกับคนที่มีลูกแล้วหรือไม่?', 'Could you date someone who already has children from a previous relationship?',
+    { c1: 'ได้', c2: 'ไม่ได้' },
+    { c1: 'Yes', c2: 'No' }),
+]
+
+// NOTE Question stock
+
+const questionStock = [
   new Question(
     'ความสัมพันธ์แบบเปิดสำคัญกับคุณหรือไม่?', 'Is an open relationship important to you?',
     { c1: 'สำคัญ', c2: 'ไม่สำคัญ' },
@@ -54,22 +95,9 @@ const questionsRegister = [
     { c1: 'สันโดษ', c2: 'เข้าสังคม' },
     { c1: 'Private', c2: 'Social' }),
   new Question(
-    'คุณเลือกจะออกเดทกับคนสูบบุหรี่รึไม่?', 'Would you go out with a smoker?',
-    { c1: 'ใช่', c2: 'ไม่ใช่' },
-    { c1: 'Yes', c2: 'No' }),
-  new Question(
-    'คุณสามารถเดทกับคนที่มีลูกแล้วหรือไม่?', 'Could you date someone who already has children from a previous relationship?',
-    { c1: 'ได้', c2: 'ไม่ได้' },
-    { c1: 'Yes', c2: 'No' }),
-  new Question(
     'คุณสามารถเดทกับคนที่ต้องการเวลาอยู่คนเดียว(ชอบเก็บตัว)ได้หรือไม่?', 'Could you date someone who needs a great deal of alone time?',
     { c1: 'ได้', c2: 'ไม่ได้' },
     { c1: 'Yes', c2: 'No' }),
-]
-
-// NOTE Question stock
-
-const questionStock = [
   new Question(
     'การออกความเห็นว่าเห็นด้วยหรือไม่เห็นด้วยสำคัญหรือไม่?', "How important is it to be able to 'agree to disagree'?",
     { c1: 'สำคัญ', c2: 'ไม่สำคัญ' },
@@ -85,10 +113,6 @@ const questionStock = [
   new Question(
     'คุณเป็นชอบไปที่บาร์ร้านกาแฟหรือร้านอาหารหรือไม่?', "Are you a regular at any bar, coffee shop or restaurant?",
     { c1: 'ใช่', c2: 'ไม่ใช่' },
-    { c1: 'Yes', c2: 'No' }),
-  new Question(
-    'คุณเชื่อไหมว่าผู้ชายต้องเป็นหัวหน้าครอบครัว?', "Do you believe that men should be the heads of their households?",
-    { c1: 'เชื่อว่าอย่างนั้น', c2: 'ไม่เชื่อ' },
     { c1: 'Yes', c2: 'No' }),
   new Question(
     'ข้อใดมักมาก่อนสำหรับคุณ?', "Which typically comes first for you?",
@@ -159,21 +183,9 @@ const questionStock = [
     { c1: 'เป็นปัญหา', c2: 'ไม่เป็นปัญหา' },
     { c1: 'Yes', c2: 'No' }),
   new Question(
-    'คุณระมัดระวังการใช้เงิน?', "Are you careful with your money?",
-    { c1: 'ใช่', c2: 'ไม่ใช่' },
-    { c1: 'Yes', c2: 'No' }),
-  new Question(
     'คุณรู้สึกรำคาญคนที่มีตรรกะในการพูดมาก ๆหรือไม่?', "Are you annoyed by people who are super logical?",
     { c1: 'ใช่', c2: 'ไม่ใช่' },
     { c1: 'Yes', c2: 'No' }),
-  new Question(
-    'คุณชอบแมวหรือไม่?', "Do you like cats?",
-    { c1: 'ชอบ', c2: 'ไม่ชอบ' },
-    { c1: 'Yes,absolutely', c2: 'No' }),
-  new Question(
-    'คุณชอบหมาหรือไม่?', "Do you like dogs?",
-    { c1: 'ชอบ', c2: 'ไม่ชอบ' },
-    { c1: 'Yes,absolutely', c2: 'No' }),
   new Question(
     'คุณมีปัญหากับคนเลี้ยง Exotic pets หรือไม่?', "Would you mind about Exotic pets?",
     { c1: 'เป็นปัญหา', c2: 'ไม่เป็นปัญหา' },
@@ -182,14 +194,6 @@ const questionStock = [
     'คิดอย่างไรกับผู้ใหญ่ที่ยังดูการ์ตูน?', "Watching cartoons as an adult is...?",
     { c1: 'แปลก', c2: 'ไม่แปลก' },
     { c1: 'Pathetic', c2: "I don't care either way / Not sure" }),
-  new Question(
-    'คุณคิดว่าเงินซื้อความสุขได้หรือไม่?', "Do you think money can buy happiness?",
-    { c1: 'ได้', c2: 'ไม่ได้' },
-    { c1: 'Yes', c2: 'No' }),
-  new Question(
-    'คุณชอบที่จะเถียงหรือไม่?', "Do you like to argue?",
-    { c1: 'ใช่', c2: 'ไม่ใช่' },
-    { c1: 'Yes', c2: 'No' }),
   new Question(
     'คุณตรวจสอบข้อมูลทางโภชนาการสำหรับอาหารที่คุณซื้อในร้านค้าเป็นประจำหรือไม่?', "Do you always examine the nutritional information for the food you buy in stores?",
     { c1: 'ใช่', c2: 'ไม่ใช่' },
@@ -333,10 +337,6 @@ const questionStock = [
   new Question(
     'ชีวิตคนบางคนมีค่ามากกว่าชีวิตอื่นหรือไม่?', "Are some human lives worth more than others?",
     { c1: 'ใช่', c2: 'ไม่ใช่' },
-    { c1: 'Yes', c2: 'No' }),
-  new Question(
-    'คุณคิดอยากจะมีความสัมพันธ์แบบเปิดหรือไม่?', "Would you consider having an open relationship?",
-    { c1: 'อยาก', c2: 'ไม่อยาก' },
     { c1: 'Yes', c2: 'No' }),
   new Question(
     'คุณชอบดูหนังอนิเมะ (แอนิเมชั่นญี่ปุ่น) หรือไม่?', "Are you really into Anime (Japanese Animation) movies?",
