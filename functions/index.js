@@ -231,10 +231,16 @@ exports.addQuestions = functions.https.onCall((data, context) => {
   var listQuestionAlready = [];
   return admin.database().ref('/').once('value').then(snap => {
     if (data.type === "RegisterQuestion") {
+      let final = {};
       allQuestion = snap.child("QuestionRegister").child(data.language).val();
-      return { questions: allQuestion }
+      Object.keys(allQuestion).forEach(key => {
+        if (allQuestion[key].status) {
+          final[key] = allQuestion[key];
+        }
+      })
+      return { questions: final }
     } else {
-      var uid = context.auth.uid;
+      const uid = context.auth.uid;
       snap.child('Users').child(uid).child('Questions').forEach((answerQuestion) => {
         listQuestionAlready.push(answerQuestion.key);
       });
@@ -243,11 +249,13 @@ exports.addQuestions = functions.https.onCall((data, context) => {
           const key = questionSnapshot.key;
           const obj = snap.child('Question').child(data.language).child(key).val();
           const object = { id: questionSnapshot.key, result: obj };
-          listQuestion.push(object);
+          if (obj.status) {
+            listQuestion.push(object);
+          }
         }
       });
       listQuestionFinal = Object.assign({}, ...listQuestion.map((x) => ({ [x.id]: x.result })));
-      console.log("size_Question", listQuestion.length.toString());
+      console.log("size_Question", listQuestion.length);
       if (listQuestion.length > 0) {
         return { questions: listQuestionFinal }
       } else {
